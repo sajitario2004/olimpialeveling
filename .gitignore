@@ -69,8 +69,30 @@ app/ios/Flutter/Flutter.podspec
 app/ios/Runner/GeneratedPluginRegistrant.h
 app/ios/Runner/GeneratedPluginRegistrant.m
 app/macos/Pods/
+app/macos/.symlinks/
 app/macos/Flutter/ephemeral/
+app/macos/Flutter/Generated.xcconfig
+app/macos/Flutter/flutter_export_environment.sh
+app/macos/Flutter/.last_build_id
 app/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Xcode User Data & Schemes
+xcuserdata/
+*.xcscmblueprint
+
+# SQLite & Test Databases
+*.db-journal
+*.db-wal
+*.db-shm
+app/*.db
+app/*.db-journal
+app/test/*.db
+app/test/*.db-journal
+
+# Environment & Sensitive Files
+.env
+.env.*
+*.env
 
 # IDEs & Editors
 *.iml

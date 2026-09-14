@@ -64,6 +64,7 @@ olimpialeveling/
 │           └── SKILL.md             # Generación de diagramas de arquitectura en Excalidraw
 │
 ├── app/                             # APLICACIÓN FLUTTER MULTIPLATAFORMA (iOS, Android, macOS)
+│   ├── README.md                    # Documentación del cliente Flutter, módulos y comandos
 │   ├── pubspec.yaml                 # Dependencias (sqflite, crypto, provider, http, audioplayers, etc.)
 │   ├── pubspec.lock                 # Versiones exactas resueltas compatibles con Flutter 3.41+ y Dart 3.11+
 │   ├── analysis_options.yaml        # Reglas de linting y buenas prácticas de Dart
@@ -169,6 +170,7 @@ olimpialeveling/
 │       └── Podfile                  # Configuración de CocoaPods nativo para plugins macOS
 │
 └── server/                          # SERVIDOR Y DASHBOARD WEB EN PYTHON (FastAPI)
+    ├── README.md                    # Documentación del servidor FastAPI, APIs y puesta en marcha
     ├── main.py                      # Aplicación FastAPI, endpoint /api/xp_curve, endpoints REST y rutas
     ├── requirements.txt             # Dependencias (fastapi, uvicorn, jinja2, pydantic, pytest, httpx)
     ├── default_config.json          # Configuración inicial por defecto (músculos, rangos, ejercicios, misiones)

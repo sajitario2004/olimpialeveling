@@ -86,6 +86,10 @@ Aplicación de gamificación del entrenamiento en gimnasio inspirada en la inter
 
 ## 🚀 Puesta en Marcha
 
+Para documentación detallada de cada módulo, consulta:
+- 📱 [Documentación del Cliente Flutter (app/README.md)](app/README.md)
+- 🖥️ [Documentación del Servidor FastAPI (server/README.md)](server/README.md)
+
 ### 1. Iniciar el Servidor Python (Dashboard de Control)
 ```bash
 cd server
