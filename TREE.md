@@ -12,6 +12,16 @@ olimpialeveling/
 ├── skills-lock.json                 # Registro de skills instaladas mediante Skills CLI
 ├── .agents/                         # Skills del agente instaladas para extender capacidades
 │   └── skills/
+│       ├── sound-effects/
+│       │   └── SKILL.md             # Generación de efectos sonoros realistas con síntesis procedural
+│       ├── audio-design/
+│       │   └── SKILL.md             # Principios y mezcla de audio para videojuegos (ADSR, ducking, buses)
+│       ├── ai-image-generation/
+│       │   └── SKILL.md             # Generación y estilizado de imágenes con modelos de vanguardia
+│       ├── app-icon/
+│       │   └── SKILL.md             # Generación y empaquetado de iconos para apps móviles (Android e iOS)
+│       ├── create-game-assets/
+│       │   └── SKILL.md             # Planificación, consistencia estética y normalización de assets
 │       ├── find-skills/
 │       │   └── SKILL.md             # Descubrir e instalar nuevas skills del ecosistema abierto
 │       ├── flutter-apply-architecture-best-practices/
@@ -72,9 +82,18 @@ olimpialeveling/
 │   ├── assets/                      # Recursos multimedia y configuración embebida
 │   │   ├── config/
 │   │   │   └── game_config.json     # Configuración exportada desde Python para compilar APK offline
-│   │   └── sounds/                  # Efectos sonoros del Sistema sintetizados en audio real
-│   │       ├── system_level_up.wav  # Sonido "Ding!" campana cristalina al subir de nivel
-│   │       └── penalty_alert.wav    # Sonido de alarma grave ante penalización del Sistema
+│   │   ├── images/                  # Arte visual, iconos y banners generados con IA
+│   │   │   ├── app_icon.png         # Icono maestro de Olimpia Leveling (Yelmo espartano neón cyan)
+│   │   │   ├── system_banner.png    # Banner holográfico estilo Solo Leveling para misiones
+│   │   │   ├── dungeon_gate.png     # Puerta dimensional mística para pruebas de rango
+│   │   │   └── default_avatar.png   # Avatar ilustrado del cazador con ojos azules neón
+│   │   └── sounds/                  # Efectos sonoros del Sistema sintetizados en audio real (44.1kHz 16-bit)
+│   │       ├── system_level_up.wav  # Arpegio ascendente majestuoso de subida de nivel
+│   │       ├── penalty_alert.wav    # Sonido de alarma urgente con tritono y pulso grave
+│   │       ├── quest_complete.wav   # Campanilla dorada cristalina de recompensa de misión
+│   │       ├── button_click.wav     # Click táctil mecánico sci-fi para interacción de interfaz
+│   │       ├── dungeon_enter.wav    # Barrido y resonancia dimensional de entrada a la mazmorra
+│   │       └── timer_beep.wav       # Tono digital limpio para intervalos de descanso
 │   │
 │   ├── lib/                         # Código fuente Dart de la aplicación
 │   │   ├── main.dart                # Punto de entrada de la app y configuración de MultiProvider

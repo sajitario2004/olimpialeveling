@@ -44,7 +44,7 @@ class _RestTimerSheetState extends State<RestTimerSheet> {
         setState(() {
           _isFinished = true;
         });
-        AudioService.instance.playLevelUp();
+        AudioService.instance.playTimerBeep();
       }
     });
   }

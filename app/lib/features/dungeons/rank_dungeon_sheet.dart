@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/system_theme.dart';
+import '../../core/audio/audio_service.dart';
 import '../../providers/game_provider.dart';
 import '../../models/muscle.dart';
 import '../../models/rank.dart';
@@ -16,6 +17,12 @@ class RankDungeonSheet extends StatefulWidget {
 
 class _RankDungeonSheetState extends State<RankDungeonSheet> {
   String _selectedDungeonType = 'pecho'; // 'pecho', 'espalda', 'pierna'
+
+  @override
+  void initState() {
+    super.initState();
+    AudioService.instance.playDungeonEnter();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +81,25 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: sheetBorderColor.withOpacity(0.5),
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Image.asset(
+                      'assets/images/dungeon_gate.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
 
                 // Header
                 Column(

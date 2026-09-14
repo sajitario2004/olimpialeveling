@@ -44,6 +44,54 @@ class AudioService {
     }
   }
 
+  Future<void> playQuestComplete() async {
+    try {
+      _ensurePlayer();
+      if (_player != null) {
+        await _player!.stop();
+        await _player!.play(AssetSource('sounds/quest_complete.wav'));
+      }
+    } catch (e) {
+      debugPrint('AudioService: Error playing quest complete sound: $e');
+    }
+  }
+
+  Future<void> playButtonClick() async {
+    try {
+      _ensurePlayer();
+      if (_player != null) {
+        await _player!.stop();
+        await _player!.play(AssetSource('sounds/button_click.wav'));
+      }
+    } catch (e) {
+      debugPrint('AudioService: Error playing button click sound: $e');
+    }
+  }
+
+  Future<void> playDungeonEnter() async {
+    try {
+      _ensurePlayer();
+      if (_player != null) {
+        await _player!.stop();
+        await _player!.play(AssetSource('sounds/dungeon_enter.wav'));
+      }
+    } catch (e) {
+      debugPrint('AudioService: Error playing dungeon enter sound: $e');
+    }
+  }
+
+  Future<void> playTimerBeep() async {
+    try {
+      _ensurePlayer();
+      if (_player != null) {
+        await _player!.stop();
+        await _player!.play(AssetSource('sounds/timer_beep.wav'));
+      }
+    } catch (e) {
+      debugPrint('AudioService: Error playing timer beep sound: $e');
+    }
+  }
+
   void dispose() {
     _player?.dispose();
     _player = null;

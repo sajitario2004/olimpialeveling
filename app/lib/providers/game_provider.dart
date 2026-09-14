@@ -494,7 +494,7 @@ class GameProvider extends ChangeNotifier {
         _player!.restTokens += 1;
       }
       await _db.updatePlayer(_player!);
-      AudioService.instance.playLevelUp();
+      AudioService.instance.playQuestComplete();
     }
   }
 

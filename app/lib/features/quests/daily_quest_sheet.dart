@@ -93,6 +93,25 @@ class _DailyQuestSheetState extends State<DailyQuestSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 90,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: (hasAnyCompleted ? SystemTheme.hunterGreen : SystemTheme.neonCyan).withOpacity(0.5),
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Image.asset(
+                      'assets/images/system_banner.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
 
                 // Header
                 Row(

@@ -447,16 +447,14 @@ class HunterProfileScreen extends StatelessWidget {
                                         ? Image.network(
                                             user.avatarUrl!,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(
-                                              Icons.person,
-                                              size: 38,
-                                              color: SystemTheme.neonCyan,
+                                            errorBuilder: (context, error, stackTrace) => Image.asset(
+                                              'assets/images/default_avatar.png',
+                                              fit: BoxFit.cover,
                                             ),
                                           )
-                                        : const Icon(
-                                            Icons.shield,
-                                            size: 34,
-                                            color: SystemTheme.neonCyan,
+                                        : Image.asset(
+                                            'assets/images/default_avatar.png',
+                                            fit: BoxFit.cover,
                                           ),
                                   ),
                                 ),

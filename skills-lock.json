@@ -1,6 +1,30 @@
 {
   "version": 1,
   "skills": {
+    "ai-image-generation": {
+      "source": "genmedia-labs/skills",
+      "sourceType": "github",
+      "skillPath": "ai-image-generation/SKILL.md",
+      "computedHash": "765f5ce859b1943e948d4f747b768389d7a9f0c563d4e93f2a3231bc1a617944"
+    },
+    "app-icon": {
+      "source": "code-with-beto/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/cwb-app-icon/skills/app-icon/SKILL.md",
+      "computedHash": "ac75d061ea3aff614eda234c14e71dadc4e29cdb4bde15c1f56c2f36e4584644"
+    },
+    "audio-design": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/audio-design/SKILL.md",
+      "computedHash": "1679bac2774f5734ef565475be975fd322aaaba87887145118a0b1abc4b84c0c"
+    },
+    "create-game-assets": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/create-game-assets/SKILL.md",
+      "computedHash": "e0991db4ed544179782a60a7020aa49c7469b66744de5a5eda28eb3a35f856be"
+    },
     "create-github-action-workflow-specification": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
@@ -144,6 +168,12 @@
       "sourceType": "github",
       "skillPath": "skills/refactor/SKILL.md",
       "computedHash": "87789a786b96f99ba0680e89345a975106e10e7db1071c7cdc2e76d507c449d6"
+    },
+    "sound-effects": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "skillPath": "sound-effects/SKILL.md",
+      "computedHash": "4de004ec3405d836c33207320a477951ce3de2f3dcb68f5365734302b91ad72c"
     },
     "test-driven-development": {
       "source": "obra/superpowers",
