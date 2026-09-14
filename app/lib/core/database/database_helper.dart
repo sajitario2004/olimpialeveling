@@ -33,7 +33,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _onUpgradeDB,
     );
@@ -56,13 +56,15 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
+        uid TEXT UNIQUE,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         salt TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'hunter',
         hunter_name TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        last_login TEXT
+        last_login TEXT,
+        avatar_url TEXT
       )
     ''');
 
@@ -86,6 +88,7 @@ class DatabaseHelper {
       final hash = PasswordHasher.hashPassword('sajiadmin', salt);
       await db.insert('users', {
         'id': 'user_sajiadmin_root',
+        'uid': '000000000000001',
         'username': 'sajiadmin',
         'password_hash': hash,
         'salt': salt,
@@ -93,6 +96,7 @@ class DatabaseHelper {
         'hunter_name': 'Saji (Arquitecto del Olimpo)',
         'created_at': DateTime.now().toIso8601String(),
         'last_login': null,
+        'avatar_url': null,
       });
     }
   }
@@ -126,6 +130,11 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 5) {
+      await _addColumnIfNotExists(db, 'users', 'uid', 'TEXT');
+      await db.execute("UPDATE users SET uid = '000000000000001' WHERE username = 'sajiadmin' AND (uid IS NULL OR uid = '')");
+      await _addColumnIfNotExists(db, 'players', 'has_completed_supreme_trial', 'INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -147,7 +156,8 @@ class DatabaseHelper {
         equipped_title TEXT,
         selected_daily_quest_id TEXT,
         rest_tokens INTEGER NOT NULL DEFAULT 1,
-        is_rest_day_used_today INTEGER NOT NULL DEFAULT 0
+        is_rest_day_used_today INTEGER NOT NULL DEFAULT 0,
+        has_completed_supreme_trial INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -458,6 +468,43 @@ class DatabaseHelper {
       return (result.first['max_weight'] as num).toDouble();
     }
     return 0.0;
+  }
+
+  /// Obtiene un mapa con todos los récords personales (ejercicio_id -> max_weight).
+  Future<Map<String, double>> getAllPersonalRecords() async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+      'SELECT exercise_id, MAX(weight) as max_weight FROM workout_logs GROUP BY exercise_id',
+    );
+    final Map<String, double> prMap = {};
+    for (final row in result) {
+      final exId = row['exercise_id'] as String?;
+      final maxWeight = (row['max_weight'] as num?)?.toDouble();
+      if (exId != null && maxWeight != null) {
+        prMap[exId] = maxWeight;
+      }
+    }
+    return prMap;
+  }
+
+  /// Permite al desarrollador establecer o modificar directamente un récord personal.
+  Future<void> devSetPersonalRecord(String exerciseId, double weightKg) async {
+    final db = await database;
+    // Si se quiere reducir o cambiar el PR, borramos los registros que superen este nuevo récord
+    await db.delete(
+      'workout_logs',
+      where: 'exercise_id = ? AND weight > ?',
+      whereArgs: [exerciseId, weightKg],
+    );
+    // Insertamos una marca de referencia con el nuevo récord
+    await db.insert('workout_logs', {
+      'exercise_id': exerciseId,
+      'weight': weightKg,
+      'reps': 1,
+      'xp_awarded': 0.0,
+      'muscle_id': 'pecho',
+      'timestamp': DateTime.now().toIso8601String(),
+    });
   }
 
   Future<List<Map<String, dynamic>>> getWorkoutLogs({int limit = 50}) async {

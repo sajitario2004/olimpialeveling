@@ -55,6 +55,17 @@ void main() {
         isFalse,
       );
     });
+
+    test('Genera un UID aleatorio de 15 caracteres alfanuméricos', () {
+      final uid1 = PasswordHasher.generateUid(15);
+      final uid2 = PasswordHasher.generateUid(15);
+
+      expect(uid1.length, 15);
+      expect(uid2.length, 15);
+      expect(uid1, matches(RegExp(r'^[a-zA-Z0-9]{15}$')));
+      expect(uid2, matches(RegExp(r'^[a-zA-Z0-9]{15}$')));
+      expect(uid1, isNot(equals(uid2)));
+    });
   });
 
   group('Modelo de Usuario (User) y Permisos de Rol', () {
@@ -126,6 +137,7 @@ void main() {
       expect(sajiUser.isAdmin, isTrue);
       expect(sajiUser.isDeveloper, isTrue);
       expect(sajiUser.hasPrivilegedAccess, isTrue);
+      expect(sajiUser.uid, '000000000000001');
 
       // Comprobar que la contraseña se valida con el hash
       final isValid = PasswordHasher.verifyPassword(
@@ -192,6 +204,8 @@ void main() {
       expect(game.currentUser?.username, uniqueUser);
       expect(game.currentUser?.hunterName, 'Cazador Fénix');
       expect(game.isAdmin, isFalse);
+      expect(game.currentUser?.uid.length, 15);
+      expect(game.currentUser?.uid, matches(RegExp(r'^[a-zA-Z0-9]{15}$')));
 
       await game.logout();
     });

@@ -228,5 +228,44 @@
       - **13/13 tests en Python (100% verde)** en `server/test_server.py`.
       - **0 errores y 0 warnings** en `flutter analyze`.
 
+---
+
+## [0.1.1] - 2026-09-14 (Versión Oficial Actual)
+
+### Estado: Completada y Verificada
+
+### 🚀 Novedades y Mejoras Implementadas:
+
+1. **Prueba Suprema de Ascensión en Nivel 100 & Transición de Color Azul a Dorado**:
+   - **Regla Estricta del Nivel 100**: Al llegar al nivel 100, el jugador no asciende automáticamente a `GOD OF OLIMPUS`. El nivel 100 se muestra en **Azul Imperial** (`#0D47A1` / `#64B5F6`) y el rango oficial permanece en **HERCULES**.
+   - **Desbloqueo de Mazmorra Suprema**: Se activa el estado `isAtTrialLevel` y se visualiza un banner táctico en el Perfil y en `RankDungeonSheet` con el desafío: *"👑 PRUEBA SUPREMA DEL OLIMPO: Desafío del Monte Olimpo"*.
+   - **Ascensión Celestial**: Al superar la prueba mediante `completeSupremeAscensionTrial()`, el estado `hasCompletedSupremeTrial` pasa a `true`, ascendiendo al rango definitivo **`GOD OF OLIMPUS`** y transformando el número de nivel y la barra de progreso al **Dorado Divino resplandeciente (`#FFD700`)**.
+
+2. **UID Único Alfanumérico de 15 Caracteres (Multijugador Online Futuro)**:
+   - Migración de SQLite v5 añadiendo la columna `uid TEXT UNIQUE` a la tabla `users`.
+   - Generación automática de identificadores de 15 caracteres alfanuméricos aleatorios (`[0-9a-zA-Z]`) mediante `PasswordHasher.generateUid(15)`.
+   - Asignación fija para el administrador maestro: **`sajiadmin`** cuenta con el UID oficial **`000000000000001`** (14 ceros + '1').
+   - Chip visual táctico en `HunterProfileScreen` debajo de `@username // ROL` con botón interactivo de copiado rápido al portapapeles con confirmación SnackBar.
+
+3. **Panel y Gestión de Récords Personales (PR)**:
+   - Métodos en `DatabaseHelper` y `GameProvider`: `getAllPersonalRecords()` y `devSetPersonalRecord(exerciseId, weightKg)`.
+   - Carrusel visual horizontal en `HunterProfileScreen` mostrando los mejores levantamientos históricos en kg con su nombre de ejercicio y grupo muscular.
+   - Botón *"MODIFICAR PRs"* visible para roles de administrador y desarrollador para ajustar directamente cualquier PR.
+
+4. **Herramientas de Desarrollador / God Mode Ampliadas**:
+   - **Selector Forzado de Rango (Testing de los 8 Rangos)**: Modal táctico en `DeveloperTerminalDialog` para saltar de inmediato a cualquiera de los 8 rangos (`skinnybitch`, `human`, `normal_gym_buddy`, `gymbro`, `soldier`, `spartan`, `hercules`, `god_of_olimpus`), asignando automáticamente los niveles requeridos a los 14 músculos para pruebas exhaustivas de UI y jugabilidad.
+   - **Editor Directo de PRs**: Formulario interactivo en `DeveloperTerminalDialog` para editar y guardar en tiempo real los récords personales de cualquier ejercicio.
+
+5. **Actualizaciones en Modelos, Pirámide y Hojas de Mazmorra**:
+   - `RankTier.getRankForHunterLevel`: soporte para el parámetro `hasCompletedSupremeTrial`, retornando `HERCULES` en nivel 100 sin prueba superada y `GOD OF OLIMPUS` con prueba superada.
+   - `RankPyramidDialog`: actualización de la cúspide con el requisito de *"Nivel 100 (Prueba Suprema Superada - Aura Dorada)"*.
+   - `RankDungeonSheet`: soporte reactivo para `isSupremeTrial`, mostrando el desafío del Monte Olimpo y el botón de ascensión a Dios.
+
+6. **Auditoría, Cobertura y Batería de Pruebas**:
+   - **60/60 tests en Flutter (100% verde)** en `app/test/` (modelos, seguridad, autenticación, responsive y widgets).
+   - **13/13 tests en Python (100% verde)** en `server/test_server.py`.
+   - **0 errores y 0 warnings** en `flutter analyze`.
+
+
 
 

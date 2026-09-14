@@ -45,8 +45,8 @@ El rango del Cazador se determina automáticamente en base a su nivel unificado 
 | 4 | `gymbro` | **GYMBRO** | Niveles 30 - 49 | En Nivel 49 | `#10B981` (Verde Esmeralda) | *"El sudor y la disciplina corren por tus venas. Respetado por tus pares."* |
 | 5 | `soldier` | **SOLDIER** | Niveles 50 - 64 | En Nivel 64 | `#EAB308` (Oro Militar) | *"Disciplina militar espartana. El dolor es debilidad abandonando el cuerpo."* |
 | 6 | `spartan` | **SPARTAN** | Niveles 65 - 79 | En Nivel 79 | `#F97316` (Naranja Ardiente) | *"¡Esto es Esparta! Ningún peso ni fatiga quebranta tu voluntad."* |
-| 7 | `hercules` | **HERCULES** | Niveles 80 - 98 | En Nivel 98 | `#EF4444` (Rojo Carmesí) | *"Fuerza mitológica sobrehumana. Capaz de realizar los 12 trabajos."* |
-| 8 | `god_of_olimpus` | **GOD OF OLIMPUS** | Niveles 99 - 100 | Nivel 99 (20x XP) | `#A855F7` / `#FFD700` | *"Ascensión celestial consumada. Te sientas en el trono del Olimpo."* |
+| 7 | `hercules` | **HERCULES** | Niveles 80 - 100 | En Nivel 98 y Nivel 100 (Previo a Prueba Suprema) | `#EF4444` (Rojo Carmesí) | *"Fuerza mitológica sobrehumana. Capaz de realizar los 12 trabajos."* |
+| 8 | `god_of_olimpus` | **GOD OF OLIMPUS** | Nivel 100 (Supremo) | Prueba Suprema del Olimpo Superada | `#A855F7` / `#FFD700` | *"Ascensión celestial consumada. Te sientas en el trono del Olimpo."* |
 
 ---
 
@@ -326,8 +326,38 @@ $$\text{CP} = (\text{TotalLevel} \times 100) + (\text{STR} \times 15) + (\text{A
        - Botón `"PASAR A LA SIGUIENTE SERIE"` que distribuye los puntos de XP a los músculos involucrados, reproduce el efecto sonoro del Sistema y activa la cuenta atrás del descanso.
 - **Suite de Pruebas**: **55/55 tests en Flutter** (unitarios y widgets con responsive) y **10/10 tests en Python**, con 0 errores y 0 warnings en `flutter analyze`.
 
+### 23. Nuevos Intervalos de Rangos Oficiales, Pruebas Físicas (Niveles 4, 14, 29, 49, 64, 79, 98), Curva x20 XP para Nivel 100 y Mecánica Drop Set
+- Intervalos oficiales actualizados de los 8 rangos:
+  - `skinnybitch`: Niveles 0 a 4 (prueba física en Nivel 4 para subir al 5).
+  - `human`: Niveles 5 a 14 (prueba física en Nivel 14 para subir al 15).
+  - `normal_gym_buddy`: Niveles 15 a 29 (prueba física en Nivel 29 para subir al 30).
+  - `gymbro`: Niveles 30 a 49 (prueba física en Nivel 49 para subir al 50).
+  - `soldier`: Niveles 50 a 64 (prueba física en Nivel 64 para subir al 65).
+  - `spartan`: Niveles 65 a 79 (prueba física en Nivel 79 para subir al 80).
+  - `hercules`: Niveles 80 a 98 (prueba física en Nivel 98 para subir al 99).
+  - `god_of_olimpus`: Niveles 99 a 100.
+- Requisito de XP de Nivel 99 a 100: Exactamente 20 veces superior al incremento del nivel 98 al 99 ($XP_{99 \to 100} = XP_{98 \to 99} \times 20.0$).
+- Mecánica Drop Set en Backend y Frontend con multiplicadores de $1\times$ (0 saltos), $2\times$ (1 salto), $3\times$ (2 saltos) y hasta $4\times$ (3 o más saltos).
+
+### 24. Versión 0.1.1: Prueba Suprema de Ascensión en Nivel 100, Identificador Único UID de 15 Caracteres, Panel de Récords Personales (PR) y Privilegios Developer
+- **Regla del Nivel 100 y Prueba Suprema de Ascensión**:
+  - Al alcanzar el Nivel 100, el nivel se renderiza en **Azul Imperial** (`#0D47A1` / `#64B5F6`) y el rango oficial del cazador permanece en **HERCULES**.
+  - Se activa la **Prueba Suprema de Ascensión del Olimpo** (`isAtTrialLevel == true`), visualizada en un banner táctico en el Perfil y en `RankDungeonSheet`.
+  - Solo tras completar con éxito esta prueba física / mazmorra suprema (`completeSupremeAscensionTrial()`), el cazador asciende oficialmente a **GOD OF OLIMPUS**, desbloqueando el aura dorada resplandeciente (`#FFD700`) en su barra de progreso y nivel de perfil.
+- **UID Alfanumérico Único de 15 Caracteres (Multijugador Online Futuro)**:
+  - Migración a SQLite v5 añadiendo la columna `uid TEXT UNIQUE` a la tabla `users`.
+  - Generación automática de identificadores aleatorios de 15 caracteres (`[0-9a-zA-Z]`) mediante `PasswordHasher.generateUid(15)`.
+  - La cuenta de administrador predeterminada `sajiadmin` tiene como identificador fijo maestro: **`000000000000001`** (14 ceros + '1').
+  - Visualización en pastilla táctica debajo de `@username // ROL` en la pestaña de Perfil, con copiado interactivo al portapapeles mediante un toque.
+- **Panel de Récords Personales (PR)**:
+  - Carrusel horizontal en la pestaña de Perfil que muestra los mejores levantamientos históricos en kg para cada ejercicio registrado.
+  - Botón `"MODIFICAR PRs"` visible para cuentas `admin` y `developer`.
+- **Privilegios de Cuenta Developer (God Mode)**:
+  - Selector en la Terminal de Desarrollador para forzar el rango del jugador a cualquiera de los 8 rangos existentes (`devSetRank(rankId)`).
+  - Editor interactivo para modificar o fijar los récords personales (PR) de cualquier ejercicio en la base de datos (`devSetPersonalRecord(exerciseId, weightKg)`).
+
 ---
 
 ## 8. Política de Versiones
-- Versión actual: **v0.0.1**.
+- Versión actual: **v0.1.1**.
 - El usuario decide expresamente cuándo realizar incrementos semver (`PATCH`, `MINOR`, `MAJOR`).

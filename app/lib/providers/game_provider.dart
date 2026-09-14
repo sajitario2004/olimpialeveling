@@ -93,11 +93,33 @@ class GameProvider extends ChangeNotifier {
     return fraction.clamp(0.0, 1.0);
   }
 
-  /// Rango del jugador en la escala 1..100
-  RankTier get hunterRank => RankTier.getRankForHunterLevel(hunterLevel);
+  /// Rango del jugador en la escala 0..100
+  RankTier get hunterRank => RankTier.getRankForHunterLevel(
+        hunterLevel,
+        hasCompletedSupremeTrial: _player?.hasCompletedSupremeTrial ?? false,
+      );
 
-  /// Indica si el cazador se encuentra en un nivel que requiere prueba física semanal para ascender
-  bool get isAtTrialLevel => RankTier.isTrialLevel(hunterLevel);
+  /// Indica si el cazador se encuentra en un nivel que requiere prueba física semanal para ascender.
+  /// En el nivel 100, se requiere la Prueba Suprema para desbloquear God of Olimpus.
+  bool get isAtTrialLevel {
+    if (hunterLevel >= 100) {
+      return !(_player?.hasCompletedSupremeTrial ?? false);
+    }
+    return RankTier.isTrialLevel(hunterLevel);
+  }
+
+  /// Indica si el jugador ha ascendido formalmente a God of Olimpus tras superar la prueba suprema
+  bool get isGodOfOlimpusUnlocked =>
+      hunterLevel >= 100 && (_player?.hasCompletedSupremeTrial ?? false);
+
+  /// Completa la prueba suprema del nivel 100 coronando al cazador como GOD OF OLIMPUS
+  Future<void> completeSupremeAscensionTrial() async {
+    if (_player == null) return;
+    _player!.hasCompletedSupremeTrial = true;
+    await _db.updatePlayer(_player!);
+    AudioService.instance.playLevelUp();
+    notifyListeners();
+  }
 
   void clearPrAlert() {
     _prAlert = null;
@@ -106,6 +128,61 @@ class GameProvider extends ChangeNotifier {
 
   Future<double> getMaxWeightForExercise(String exerciseId) {
     return _db.getMaxWeightForExercise(exerciseId);
+  }
+
+  Future<Map<String, double>> getAllPersonalRecords() {
+    return _db.getAllPersonalRecords();
+  }
+
+  /// Herramienta de desarrollador: modificar o fijar el récord personal de un ejercicio
+  Future<void> devSetPersonalRecord(String exerciseId, double weightKg) async {
+    await _db.devSetPersonalRecord(exerciseId, weightKg);
+    notifyListeners();
+  }
+
+  /// Herramienta de desarrollador: forzar el rango a cualquiera de los 8 rangos para pruebas
+  Future<void> devSetRank(String rankId) async {
+    if (_player == null) return;
+    int targetLevel = 1;
+    bool supreme = false;
+    switch (rankId) {
+      case 'skinnybitch':
+        targetLevel = 2;
+        break;
+      case 'human':
+        targetLevel = 8;
+        break;
+      case 'normal_gym_buddy':
+        targetLevel = 20;
+        break;
+      case 'gymbro':
+        targetLevel = 35;
+        break;
+      case 'soldier':
+        targetLevel = 55;
+        break;
+      case 'spartan':
+        targetLevel = 70;
+        break;
+      case 'hercules':
+        targetLevel = 88;
+        break;
+      case 'god_of_olimpus':
+        targetLevel = 100;
+        supreme = true;
+        break;
+      default:
+        targetLevel = 1;
+    }
+
+    _player!.totalLevel = targetLevel * 14;
+    _player!.hasCompletedSupremeTrial = supreme;
+    for (int i = 0; i < _muscles.length; i++) {
+      _muscles[i] = _muscles[i].copyWith(level: targetLevel);
+      await _db.updateMuscle(_muscles[i]);
+    }
+    await _db.updatePlayer(_player!);
+    notifyListeners();
   }
 
   void clearLevelUpEvent() {
@@ -587,13 +664,17 @@ class GameProvider extends ChangeNotifier {
       final salt = PasswordHasher.generateSalt(16);
       final hash = PasswordHasher.hashPassword(password.trim(), salt);
       final newId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+      final newUid = cleanUser == 'sajiadmin'
+          ? '000000000000001'
+          : PasswordHasher.generateUid(15);
 
       final newUser = User(
         id: newId,
+        uid: newUid,
         username: cleanUser,
         passwordHash: hash,
         salt: salt,
-        role: 'hunter',
+        role: cleanUser == 'sajiadmin' ? 'admin,developer' : 'hunter',
         hunterName: hunterName.trim().isEmpty ? cleanUser : hunterName.trim(),
         createdAt: DateTime.now().toIso8601String(),
         lastLogin: DateTime.now().toIso8601String(),

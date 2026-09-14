@@ -17,7 +17,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'god_of_olimpus',
       'name': 'GOD OF OLIMPUS',
-      'levelText': 'Nivel 99 - 100 (Cúspide Divina - 20x XP)',
+      'levelText': 'Nivel 100 (Prueba Suprema Superada - Aura Dorada)',
       'color': Color(0xFFFFD700),
       'secondaryColor': Color(0xFFA855F7),
       'quote': 'Ascensión celestial consumada. Trono del Olimpo alcanzado.',
@@ -26,7 +26,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'hercules',
       'name': 'HERCULES',
-      'levelText': 'Nivel 80 - 98 (Prueba en Nivel 98)',
+      'levelText': 'Nivel 80 - 100 (En Azul previo a Prueba Suprema)',
       'color': Color(0xFFEF4444),
       'secondaryColor': Color(0xFFB91C1C),
       'quote': 'Fuerza mitológica legendaria sobrehumana.',

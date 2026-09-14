@@ -30,8 +30,23 @@ void main() {
       expect(RankTier.getRankForLevel(79).name, 'SPARTAN');
       expect(RankTier.getRankForLevel(80).name, 'HERCULES');
       expect(RankTier.getRankForLevel(98).name, 'HERCULES');
-      expect(RankTier.getRankForLevel(99).name, 'GOD OF OLIMPUS');
-      expect(RankTier.getRankForLevel(100).name, 'GOD OF OLIMPUS');
+      expect(RankTier.getRankForLevel(99).name, 'HERCULES');
+      // En nivel 100, si no se ha completado la prueba suprema, se permanece en HERCULES
+      expect(RankTier.getRankForLevel(100, hasCompletedSupremeTrial: false).name, 'HERCULES');
+      // Solo al superar la prueba suprema se asciende a GOD OF OLIMPUS
+      expect(RankTier.getRankForLevel(100, hasCompletedSupremeTrial: true).name, 'GOD OF OLIMPUS');
+    });
+
+    test('Niveles de prueba física / ascensión incluyen el nivel 100 supremo', () {
+      expect(RankTier.isTrialLevel(4), isTrue);
+      expect(RankTier.isTrialLevel(14), isTrue);
+      expect(RankTier.isTrialLevel(29), isTrue);
+      expect(RankTier.isTrialLevel(49), isTrue);
+      expect(RankTier.isTrialLevel(64), isTrue);
+      expect(RankTier.isTrialLevel(79), isTrue);
+      expect(RankTier.isTrialLevel(98), isTrue);
+      expect(RankTier.isTrialLevel(100), isTrue);
+      expect(RankTier.isTrialLevel(50), isFalse);
     });
 
     test('Cálculo de XP de ejercicio por peso y repeticiones (Press inclinado)', () {
@@ -326,11 +341,12 @@ void main() {
       expect(RankTier.getRankForHunterLevel(79).name, 'SPARTAN');
       expect(RankTier.getRankForHunterLevel(80).name, 'HERCULES');
       expect(RankTier.getRankForHunterLevel(98).name, 'HERCULES');
-      expect(RankTier.getRankForHunterLevel(99).name, 'GOD OF OLIMPUS');
-      expect(RankTier.getRankForHunterLevel(100).name, 'GOD OF OLIMPUS');
+      expect(RankTier.getRankForHunterLevel(99).name, 'HERCULES');
+      expect(RankTier.getRankForHunterLevel(100, hasCompletedSupremeTrial: false).name, 'HERCULES');
+      expect(RankTier.getRankForHunterLevel(100, hasCompletedSupremeTrial: true).name, 'GOD OF OLIMPUS');
     });
 
-    test('Niveles de prueba física semanal de ascenso (4, 14, 29, 49, 64, 79, 98)', () {
+    test('Niveles de prueba física semanal de ascenso (4, 14, 29, 49, 64, 79, 98, 100)', () {
       expect(RankTier.isTrialLevel(4), true);
       expect(RankTier.isTrialLevel(14), true);
       expect(RankTier.isTrialLevel(29), true);
@@ -338,6 +354,7 @@ void main() {
       expect(RankTier.isTrialLevel(64), true);
       expect(RankTier.isTrialLevel(79), true);
       expect(RankTier.isTrialLevel(98), true);
+      expect(RankTier.isTrialLevel(100), true);
 
       // Niveles no prueba
       expect(RankTier.isTrialLevel(0), false);
@@ -345,7 +362,6 @@ void main() {
       expect(RankTier.isTrialLevel(15), false);
       expect(RankTier.isTrialLevel(30), false);
       expect(RankTier.isTrialLevel(99), false);
-      expect(RankTier.isTrialLevel(100), false);
     });
 
     test('Nivel 99 a 100 requiere 20 veces más XP que nivel 98 a 99', () {

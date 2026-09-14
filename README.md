@@ -2,11 +2,15 @@
 
 > **"De skinny bitch a dios del olimpo (despanchizado)"**
 
+![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)
+![Tests](https://img.shields.io/badge/tests-60%2F60%20passing-brightgreen.svg)
+![Analysis](https://img.shields.io/badge/analysis-0%20issues-brightgreen.svg)
+
 Aplicación de gamificación del entrenamiento en gimnasio inspirada en la interfaz holográfica del "Sistema" de **Solo Leveling** y la mitología del Olimpo.
 
 ---
 
-## ⚡ Características Principales
+## ⚡ Características Principales (v0.1.1)
 
 1. **Nivel por Músculo & Nivel Total**:
    - Cada uno de los **14 músculos** tiene su propia barra de experiencia y nivel individual:
@@ -56,6 +60,27 @@ Aplicación de gamificación del entrenamiento en gimnasio inspirada en la inter
 
 10. **Dashboard Web en Python (FastAPI)**:
     - Panel interactivo en `http://localhost:8000` con visualización de curva de XP, balanceo de ejercicios y simulador.
+
+11. **Prueba Suprema de Ascensión y Nivel 100**:
+    - Al alcanzar el Nivel 100, la interfaz y el número se muestran en **Azul Imperial** (`#0D47A1` / `#64B5F6`) y el rango se mantiene en **HERCULES**.
+    - Se desbloquea la **Prueba Suprema del Olimpo** en Mazmorras.
+    - Superar la prueba corona al cazador como **GOD OF OLIMPUS** y transforma el perfil al **Dorado Divino** (`#FFD700`).
+
+12. **UID Único Alfanumérico de 15 Caracteres (Multijugador Online)**:
+    - Identificador único aleatorio de 15 caracteres para cada jugador, preparado para sincronización de servidores e interacciones con amigos.
+    - Insignia táctica con botón de copiado rápido al portapapeles en el perfil.
+    - Cuenta administradora `sajiadmin` preconfigurada con el UID maestro `000000000000001`.
+
+13. **Panel y Récords Personales (PR)**:
+    - Carrusel horizontal interactivo en el perfil que exhibe los récords personales (PR) en kg de cada ejercicio.
+
+14. **Herramientas de Desarrollador Ampliadas (Terminal del Sistema)**:
+    - Selector rápido para forzar el rango del cazador a cualquiera de los 8 rangos existentes con un solo toque.
+    - Editor interactivo para modificar y calibrar los récords personales (PR) directamente.
+
+15. **Gestor de Rutinas de Entrenamiento Guiadas & Drop Sets**:
+    - Creación de rutinas personalizadas y sesiones guiadas paso a paso con descansos interactivos.
+    - Mecánica Drop Set configurable por ejercicio multiplicando la XP ganada ($2\times$, $3\times$, hasta $4\times$).
 
 ---
 

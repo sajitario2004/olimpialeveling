@@ -28,4 +28,11 @@ class PasswordHasher {
     final computedHash = hashPassword(password, salt);
     return computedHash == expectedHash;
   }
+
+  /// Genera un identificador único (UID) alfanumérico aleatorio de [length] caracteres (letras y números).
+  static String generateUid([int length = 15]) {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    final random = Random.secure();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
+  }
 }

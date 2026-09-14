@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/system_theme.dart';
@@ -10,9 +11,123 @@ import '../routines/routine_session_screen.dart';
 import '../dungeons/rank_dungeon_sheet.dart';
 
 /// Pestaña del perfil del cazador con avatar, cambio de nombre/clave, barra de nivel (azul oscuro / dorado),
-/// popup piramidal de rangos y menú scroll para gestión de rutinas.
+/// UID alfanumérico de 15 caracteres, récords personales (PR) y menú scroll para gestión de rutinas.
 class HunterProfileScreen extends StatelessWidget {
   const HunterProfileScreen({super.key});
+
+  void _openEditPersonalRecordsDialog(BuildContext context, GameProvider game) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0F172A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: SystemTheme.spartanGold, width: 1.5),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.emoji_events, color: SystemTheme.spartanGold, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'MODIFICAR RÉCORDS (PR)',
+              style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 460,
+          child: FutureBuilder<Map<String, double>>(
+            future: game.getAllPersonalRecords(),
+            builder: (context, snapshot) {
+              final prMap = snapshot.data ?? {};
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: game.exercises.map((exercise) {
+                    final currentPr = prMap[exercise.id] ?? 0.0;
+                    final ctrl = TextEditingController(
+                      text: currentPr > 0 ? currentPr.toStringAsFixed(1) : '',
+                    );
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  exercise.name,
+                                  style: GoogleFonts.orbitron(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'Actual: ${currentPr > 0 ? "${currentPr.toStringAsFixed(1)} kg" : "Sin récord"}',
+                                  style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white60),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: ctrl,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                hintText: '0.0 kg',
+                                hintStyle: const TextStyle(color: Colors.white24, fontSize: 11),
+                                filled: true,
+                                fillColor: const Color(0xFF1E293B),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            icon: const Icon(Icons.save, color: SystemTheme.spartanGold, size: 20),
+                            tooltip: 'Guardar PR',
+                            onPressed: () async {
+                              final newWeight = double.tryParse(ctrl.text.trim()) ?? 0.0;
+                              await game.devSetPersonalRecord(exercise.id, newWeight);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('PR de ${exercise.name} fijado en $newWeight kg'),
+                                    backgroundColor: SystemTheme.hunterGreen,
+                                    duration: const Duration(seconds: 1),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'LISTO',
+              style: GoogleFonts.orbitron(color: Colors.white70, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _openRankDungeon(BuildContext context) {
     showModalBottomSheet(
@@ -270,7 +385,7 @@ class HunterProfileScreen extends StatelessWidget {
         final rank = game.hunterRank;
         final routines = game.routines;
 
-        final isMaxLevel = level >= 100;
+        final isMaxLevel = level >= 100 && game.isGodOfOlimpusUnlocked;
 
         // Regla de color solicitada por el usuario:
         // - Mientras se sube de nivel (< 100): tanto la barra como el número en AZUL OSCURO.
@@ -395,6 +510,48 @@ class HunterProfileScreen extends StatelessWidget {
                                       fontSize: 12,
                                       color: SystemTheme.neonCyan,
                                       fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  // UID TACTICAL BADGE CON COPIADO AL PORTAPAPELES
+                                  InkWell(
+                                    onTap: () {
+                                      final uid = user?.uid ?? '000000000000001';
+                                      Clipboard.setData(ClipboardData(text: uid));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('UID copiado al portapapeles: $uid'),
+                                          backgroundColor: SystemTheme.neonCyan,
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF111D33),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.35)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.tag, size: 12, color: SystemTheme.neonCyan),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'UID: ${user?.uid ?? "000000000000001"}',
+                                            style: GoogleFonts.orbitron(
+                                              fontSize: 10,
+                                              color: Colors.white70,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.6,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Icon(Icons.copy, size: 11, color: Colors.white38),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -530,16 +687,24 @@ class HunterProfileScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [
-                                    SystemTheme.spartanGold.withOpacity(0.25),
-                                    SystemTheme.dangerRed.withOpacity(0.2),
-                                  ],
+                                  colors: level >= 100
+                                      ? [
+                                          const Color(0xFF0D47A1).withOpacity(0.4),
+                                          const Color(0xFF1565C0).withOpacity(0.2),
+                                        ]
+                                      : [
+                                          SystemTheme.spartanGold.withOpacity(0.25),
+                                          SystemTheme.dangerRed.withOpacity(0.2),
+                                        ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: SystemTheme.spartanGold, width: 1.8),
+                                border: Border.all(
+                                  color: level >= 100 ? const Color(0xFF64B5F6) : SystemTheme.spartanGold,
+                                  width: 1.8,
+                                ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: SystemTheme.spartanGold.withOpacity(0.25),
+                                    color: (level >= 100 ? const Color(0xFF1E88E5) : SystemTheme.spartanGold).withOpacity(0.25),
                                     blurRadius: 10,
                                     spreadRadius: 1,
                                   ),
@@ -550,10 +715,14 @@ class HunterProfileScreen extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: SystemTheme.spartanGold.withOpacity(0.2),
+                                      color: (level >= 100 ? const Color(0xFF1E88E5) : SystemTheme.spartanGold).withOpacity(0.2),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.military_tech, color: SystemTheme.spartanGold, size: 24),
+                                    child: Icon(
+                                      Icons.military_tech,
+                                      color: level >= 100 ? const Color(0xFF64B5F6) : SystemTheme.spartanGold,
+                                      size: 24,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -561,17 +730,21 @@ class HunterProfileScreen extends StatelessWidget {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          '⚔️ ¡PRUEBA FÍSICA DE ASCENSIÓN!',
+                                          level >= 100
+                                              ? '👑 ¡PRUEBA SUPREMA DE ASCENSIÓN!'
+                                              : '⚔️ ¡PRUEBA FÍSICA DE ASCENSIÓN!',
                                           style: GoogleFonts.orbitron(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w900,
-                                            color: SystemTheme.spartanGold,
+                                            color: level >= 100 ? const Color(0xFF64B5F6) : SystemTheme.spartanGold,
                                             letterSpacing: 1.0,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          'Nivel $level alcanzado. Completa la prueba semanal para desbloquear el siguiente rango.',
+                                          level >= 100
+                                              ? 'Nivel 100 alcanzado en azul. Supera la prueba suprema del Olimpo para ascender a God of Olimpus.'
+                                              : 'Nivel $level alcanzado. Completa la prueba semanal para desbloquear el siguiente rango.',
                                           style: GoogleFonts.rajdhani(
                                             fontSize: 11,
                                             color: Colors.white,
@@ -581,7 +754,11 @@ class HunterProfileScreen extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  const Icon(Icons.play_arrow, color: SystemTheme.spartanGold, size: 24),
+                                  Icon(
+                                    Icons.play_arrow,
+                                    color: level >= 100 ? const Color(0xFF64B5F6) : SystemTheme.spartanGold,
+                                    size: 24,
+                                  ),
                                 ],
                               ),
                             ),
@@ -589,6 +766,167 @@ class HunterProfileScreen extends StatelessWidget {
                         ],
                       ],
                     ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // RÉCORDS PERSONALES (PR)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.emoji_events, color: SystemTheme.spartanGold, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'RÉCORDS PERSONALES (PR)',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (user?.isDeveloper == true || user?.isAdmin == true)
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: SystemTheme.spartanGold,
+                            side: const BorderSide(color: SystemTheme.spartanGold, width: 1.2),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          icon: const Icon(Icons.edit, size: 14),
+                          label: Text(
+                            'MODIFICAR PRs',
+                            style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () => _openEditPersonalRecordsDialog(context, game),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  FutureBuilder<Map<String, double>>(
+                    future: game.getAllPersonalRecords(),
+                    builder: (context, snapshot) {
+                      final prMap = snapshot.data ?? {};
+                      final prExercises = game.exercises.where((e) => (prMap[e.id] ?? 0.0) > 0).toList();
+
+                      if (prExercises.isEmpty) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0E1626),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.fitness_center, color: Colors.white30, size: 28),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Aún no has registrado récords personales (PR).',
+                                style: GoogleFonts.rajdhani(color: Colors.white60, fontSize: 13),
+                              ),
+                              Text(
+                                'Completa entrenamientos para registrar tus pesos máximos.',
+                                style: GoogleFonts.rajdhani(color: Colors.white38, fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return SizedBox(
+                        height: 110,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: prExercises.length,
+                          separatorBuilder: (context, index) => const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            final exercise = prExercises[index];
+                            final weight = prMap[exercise.id] ?? 0.0;
+                            return Container(
+                              width: 160,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0E1626),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: SystemTheme.spartanGold.withOpacity(0.35),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: SystemTheme.spartanGold.withOpacity(0.06),
+                                    blurRadius: 10,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.fitness_center, color: SystemTheme.neonCyan, size: 16),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          exercise.name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.orbitron(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'RÉCORD MÁXIMO',
+                                        style: GoogleFonts.orbitron(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: SystemTheme.spartanGold,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${weight.toStringAsFixed(1)} kg',
+                                        style: GoogleFonts.orbitron(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    exercise.primaryMuscle.toUpperCase(),
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 24),

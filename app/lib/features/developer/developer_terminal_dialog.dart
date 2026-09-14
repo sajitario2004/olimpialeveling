@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/system_theme.dart';
+import '../../models/rank.dart';
 import '../../providers/game_provider.dart';
 
 /// Modal táctico exclusivo para cuentas con privilegios de Administrador o Desarrollador (God Mode).
@@ -82,6 +83,37 @@ class DeveloperTerminalDialog extends StatelessWidget {
                         _infoCol('TOKENS', '${player?.restTokens ?? 0}'),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Text(
+                    'CONTROL DE RANGO Y RÉCORDS (TESTING)',
+                    style: GoogleFonts.orbitron(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: SystemTheme.spartanGold,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Forzar Rango a cualquiera de los 8
+                  _actionButton(
+                    context: context,
+                    icon: Icons.military_tech,
+                    color: SystemTheme.spartanGold,
+                    label: 'FORZAR RANGO (ELEGIR ENTRE LOS 8 RANGOS)',
+                    onTap: () => _showRankSelector(context, game),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Modificar Récords Personales (PR)
+                  _actionButton(
+                    context: context,
+                    icon: Icons.emoji_events,
+                    color: const Color(0xFF64B5F6),
+                    label: 'MODIFICAR RÉCORDS PERSONALES (PR)',
+                    onTap: () => _showPrEditor(context, game),
                   ),
                   const SizedBox(height: 16),
 
@@ -266,6 +298,207 @@ class DeveloperTerminalDialog extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _showRankSelector(BuildContext context, GameProvider game) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: SystemTheme.spartanGold, width: 1.5),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.military_tech, color: SystemTheme.spartanGold, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                'FORZAR RANGO DE PRUEBA',
+                style: GoogleFonts.orbitron(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: SystemTheme.spartanGold,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 380,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: RankTier.allRanks.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final tier = RankTier.allRanks[index];
+                final isCurrent = game.hunterRank.id == tier.id;
+                return ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: tier.color.withOpacity(isCurrent ? 0.9 : 0.4), width: isCurrent ? 1.8 : 1.0),
+                  ),
+                  tileColor: tier.color.withOpacity(0.12),
+                  leading: Icon(Icons.shield, color: tier.color),
+                  title: Text(
+                    tier.name,
+                    style: GoogleFonts.orbitron(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isCurrent ? Colors.white : Colors.white70,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Niveles: ${tier.minLevel} - ${tier.maxLevel} // ${tier.id == "god_of_olimpus" ? "Nivel 100 Ascendido" : tier.quote}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white60),
+                  ),
+                  trailing: isCurrent ? Icon(Icons.check_circle, color: tier.color, size: 18) : null,
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    await game.devSetRank(tier.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Rango forzado a: ${tier.name}'),
+                          backgroundColor: tier.color,
+                        ),
+                      );
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('CANCELAR', style: GoogleFonts.orbitron(color: Colors.white60, fontSize: 11)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPrEditor(BuildContext context, GameProvider game) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF64B5F6), width: 1.5),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.emoji_events, color: SystemTheme.spartanGold, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                'MODIFICAR RÉCORDS (PR)',
+                style: GoogleFonts.orbitron(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 440,
+            child: FutureBuilder<Map<String, double>>(
+              future: game.getAllPersonalRecords(),
+              builder: (context, snapshot) {
+                final prMap = snapshot.data ?? {};
+                return SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: game.exercises.map((exercise) {
+                      final currentPr = prMap[exercise.id] ?? 0.0;
+                      final ctrl = TextEditingController(
+                        text: currentPr > 0 ? currentPr.toStringAsFixed(1) : '',
+                      );
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    exercise.name,
+                                    style: GoogleFonts.orbitron(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Actual: ${currentPr > 0 ? "${currentPr.toStringAsFixed(1)} kg" : "Sin récord"}',
+                                    style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white60),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 80,
+                              child: TextField(
+                                controller: ctrl,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                style: const TextStyle(color: Colors.white, fontSize: 13),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: '0.0 kg',
+                                  hintStyle: const TextStyle(color: Colors.white24, fontSize: 11),
+                                  filled: true,
+                                  fillColor: const Color(0xFF1E293B),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            IconButton(
+                              icon: const Icon(Icons.save, color: SystemTheme.spartanGold, size: 20),
+                              tooltip: 'Guardar PR',
+                              onPressed: () async {
+                                final newWeight = double.tryParse(ctrl.text.trim()) ?? 0.0;
+                                await game.devSetPersonalRecord(exercise.id, newWeight);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('PR de ${exercise.name} fijado en $newWeight kg'),
+                                      backgroundColor: SystemTheme.hunterGreen,
+                                      duration: const Duration(seconds: 1),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                'LISTO',
+                style: GoogleFonts.orbitron(color: Colors.white70),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

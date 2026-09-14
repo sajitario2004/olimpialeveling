@@ -85,9 +85,9 @@ olimpialeveling/
 │   │   │   ├── config/
 │   │   │   │   └── game_config_service.dart # Lector de configuración de juego para el APK offline
 │   │   │   ├── database/
-│   │   │   │   └── database_helper.dart     # SQLite v3 con tablas users, auth_sessions, seeding sajiadmin
+│   │   │   │   └── database_helper.dart     # SQLite v5 con users (UID 15 caracteres), sessions, PRs y ascensión
 │   │   │   ├── security/
-│   │   │   │   └── password_hasher.dart     # Hashing criptográfico SHA-256 con salt seguro
+│   │   │   │   └── password_hasher.dart     # Hashing SHA-256 con salt y generador de UID de 15 caracteres
 │   │   │   ├── sync/
 │   │   │   │   └── server_sync_service.dart # Sincronización REST con el servidor Python local
 │   │   │   └── theme/
@@ -98,13 +98,13 @@ olimpialeveling/
 │   │   │   ├── daily_quest.dart     # Las 4 misiones legendarias con selector y comprobación de éxito
 │   │   │   ├── exercise.dart        # Ejercicio con cálculo de XP por peso y repeticiones
 │   │   │   ├── muscle.dart          # Los 14 músculos con curva de XP recursiva del 15% y mapa de calor
-│   │   │   ├── player.dart          # Cazador: nivel total, rango, títulos, racha (+5%/+10% XP) y atributos
-│   │   │   ├── rank.dart            # Los 8 rangos: de skinnybitch a god of olimpus con umbrales y colores
+│   │   │   ├── player.dart          # Cazador: nivel, rango, racha, PRs y estado hasCompletedSupremeTrial
+│   │   │   ├── rank.dart            # Los 8 rangos: pruebas de ascensión (4..98, 100), God of Olimpus
 │   │   │   ├── routine.dart         # Modelo de rutinas y ejercicios configurados (sets, reps, peso, descanso)
-│   │   │   └── user.dart            # Usuario y Cazador autenticado con roles admin y developer
+│   │   │   └── user.dart            # Usuario y Cazador autenticado con roles admin/developer y UID
 │   │   │
 │   │   ├── providers/               # Gestores de estado reactivo
-│   │   │   └── game_provider.dart   # Orquestador del juego: auth, God Mode, anti-cheat, penalizaciones, rutinas
+│   │   │   └── game_provider.dart   # Orquestador: auth, devSetRank, devSetPR, ascensión suprema, rutinas
 │   │   │
 │   │   └── features/                # Vistas y pantallas divididas por funcionalidad
 │   │       ├── splash/
@@ -112,17 +112,20 @@ olimpialeveling/
 │   │       ├── auth/
 │   │       │   └── auth_screen.dart              # Pantalla holográfica de login y despertar de cazadores
 │   │       ├── developer/
-│   │       │   └── developer_terminal_dialog.dart# Terminal del desarrollador / God Mode HUD para pruebas QA
+│   │       │   └── developer_terminal_dialog.dart# Terminal de desarrollador: forzar 8 rangos y editor de PRs
 │   │       ├── home/
-│   │       │   └── home_screen.dart              # Pantalla con barra de navegación de 3 pestañas (Ejercicios, Cuerpo, Perfil)
+│   │       │   └── home_screen.dart              # Navegación en 3 pestañas: Ejercicios, Cuerpo (default) y Perfil
 │   │       ├── body_map/
-│   │       │   └── widgets/
-│   │       │       ├── anatomical_body_view.dart # Siluetas frontal (izq) y dorsal (der) con mapa de calor
-│   │       │       └── muscle_detail_sheet.dart  # Modal holográfico de registro de series y selector de discos
+│   │       │   ├── widgets/
+│   │       │   │   ├── anatomical_body_view.dart # Mapa interactivo frontal/dorsal de los 14 músculos
+│   │       │   │   └── muscle_detail_sheet.dart  # Detalle de músculo, registro de series, 1RM y Drop Sets
+│   │       │   └── body_map_screen.dart          # Pantalla principal del cuerpo anatómico
+│   │       ├── exercises/
+│   │       │   └── exercise_library_screen.dart  # Buscador de ejercicios con multimedia, YouTube y 4 músculos
 │   │       ├── profile/
-│   │       │   ├── hunter_profile_screen.dart    # Perfil de cazador, nivel 1-100 (azul/oro), avatar y gestor de rutinas
-│   │       │   └── widgets/
-│   │       │       └── rank_pyramid_dialog.dart  # Jerarquía de 8 rangos en forma de pirámide con botón X de cierre
+│   │       │   ├── widgets/
+│   │       │   │   └── rank_pyramid_dialog.dart  # Modal piramidal con los 8 rangos y botón 'X'
+│   │       │   └── hunter_profile_screen.dart    # Perfil (1-100 azul/oro), chip UID copiable, carrusel PRs y rutinas
 │   │       ├── routines/
 │   │       │   ├── routine_editor_dialog.dart    # Modal de creación y edición completa de rutinas
 │   │       │   └── routine_session_screen.dart   # Sesión de entrenamiento guiada interactiva con descanso y +15s

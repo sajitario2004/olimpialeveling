@@ -513,6 +513,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 15));
 
     expect(find.text('PECHO'), findsOneWidget);
     expect(find.text('1RM ESTIMADO'), findsOneWidget);

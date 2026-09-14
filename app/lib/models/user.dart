@@ -1,6 +1,7 @@
 /// Modelo de Usuario / Cazador autenticado en Olimpia Leveling.
 class User {
   final String id;
+  final String uid; // Identificador único de 15 caracteres alfanuméricos
   final String username;
   final String passwordHash;
   final String salt;
@@ -12,6 +13,7 @@ class User {
 
   const User({
     required this.id,
+    this.uid = '000000000000001',
     required this.username,
     required this.passwordHash,
     required this.salt,
@@ -42,6 +44,7 @@ class User {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'uid': uid,
       'username': username,
       'password_hash': passwordHash,
       'salt': salt,
@@ -56,6 +59,8 @@ class User {
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
       id: map['id'] as String,
+      uid: map['uid'] as String? ??
+          (map['username'] == 'sajiadmin' ? '000000000000001' : '000000000000001'),
       username: map['username'] as String,
       passwordHash: map['password_hash'] as String,
       salt: map['salt'] as String,
@@ -69,6 +74,7 @@ class User {
 
   User copyWith({
     String? id,
+    String? uid,
     String? username,
     String? passwordHash,
     String? salt,
@@ -80,6 +86,7 @@ class User {
   }) {
     return User(
       id: id ?? this.id,
+      uid: uid ?? this.uid,
       username: username ?? this.username,
       passwordHash: passwordHash ?? this.passwordHash,
       salt: salt ?? this.salt,

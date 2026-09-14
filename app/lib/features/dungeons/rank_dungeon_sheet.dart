@@ -24,10 +24,11 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
         final player = game.player;
         if (player == null) return const SizedBox.shrink();
 
+        final bool isSupremeTrial = game.hunterLevel >= 100 && !player.hasCompletedSupremeTrial;
         final currentRankIndex = player.rankIndex;
-        final nextRankIndex = (currentRankIndex + 1).clamp(0, 7);
+        final nextRankIndex = isSupremeTrial ? 7 : (currentRankIndex + 1).clamp(0, 7);
         final nextRank = RankTier.allRanks[nextRankIndex];
-        final isMaxRank = currentRankIndex >= 7;
+        final isMaxRank = player.hasCompletedSupremeTrial && currentRankIndex >= 7;
 
         // VERIFICATION: Check -2 ranks rule
         // Target rank is nextRankIndex. Minimum allowed muscle rank is max(0, nextRankIndex - 2)
@@ -40,18 +41,22 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
 
         final bool isBlockedByImbalance = laggingMuscles.isNotEmpty;
 
+        final Color sheetBorderColor = isBlockedByImbalance
+            ? SystemTheme.dangerRed
+            : (isSupremeTrial ? const Color(0xFF64B5F6) : SystemTheme.spartanGold);
+
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: const Color(0xFF070B14),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border.all(
-              color: isBlockedByImbalance ? SystemTheme.dangerRed : SystemTheme.spartanGold,
+              color: sheetBorderColor,
               width: 1.8,
             ),
             boxShadow: [
               BoxShadow(
-                color: (isBlockedByImbalance ? SystemTheme.dangerRed : SystemTheme.spartanGold).withOpacity(0.25),
+                color: sheetBorderColor.withOpacity(0.25),
                 blurRadius: 30,
               ),
             ],
@@ -82,11 +87,15 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '[SISTEMA // MAZMORRA SEMANAL]',
+                              isSupremeTrial
+                                  ? '[SISTEMA // PRUEBA SUPREMA DE ASCENSIÓN]'
+                                  : '[SISTEMA // MAZMORRA SEMANAL]',
                               style: GoogleFonts.orbitron(
                                 fontSize: 10,
                                 letterSpacing: 1.5,
-                                color: isBlockedByImbalance ? SystemTheme.dangerRed : SystemTheme.spartanGold,
+                                color: isBlockedByImbalance
+                                    ? SystemTheme.dangerRed
+                                    : (isSupremeTrial ? const Color(0xFF64B5F6) : SystemTheme.spartanGold),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -100,16 +109,16 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: nextRank.color.withOpacity(0.2),
+                                color: (isSupremeTrial ? const Color(0xFFFFD700) : nextRank.color).withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: nextRank.color),
+                                border: Border.all(color: isSupremeTrial ? const Color(0xFFFFD700) : nextRank.color),
                               ),
                               child: Text(
-                                'RUMBO A ${nextRank.name}',
+                                isSupremeTrial ? 'ASCENSIÓN A GOD OF OLIMPUS' : 'RUMBO A ${nextRank.name}',
                                 style: GoogleFonts.orbitron(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: nextRank.color,
+                                  color: isSupremeTrial ? const Color(0xFFFFD700) : nextRank.color,
                                 ),
                               ),
                             ),
@@ -122,7 +131,7 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'PRUEBA DE ASCENSO DE RANGO',
+                        isSupremeTrial ? 'PRUEBA SUPREMA DEL OLIMPO' : 'PRUEBA DE ASCENSO DE RANGO',
                         style: GoogleFonts.orbitron(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -138,15 +147,130 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: SystemTheme.divinePurple.withOpacity(0.15),
+                      color: const Color(0xFFFFD700).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: SystemTheme.divinePurple),
+                      border: Border.all(color: const Color(0xFFFFD700)),
                     ),
                     child: Text(
                       '¡Has alcanzado el rango supremo GOD OF OLIMPUS! Te sientas en la cima del panteón de los dioses.',
                       style: GoogleFonts.rajdhani(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   )
+                else if (isSupremeTrial) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF0D47A1).withOpacity(0.4),
+                          const Color(0xFF1565C0).withOpacity(0.2),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF64B5F6), width: 1.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.stars, color: Color(0xFF64B5F6), size: 24),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'DESAFÍO SUPREMO: MONTE OLIMPO',
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFF64B5F6),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Has conquistado el Nivel 100 (mostrado en azul). Supera la prueba suprema para reclamar el rango definitivo GOD OF OLIMPUS y teñir tu perfil en aura dorada.',
+                          style: GoogleFonts.rajdhani(
+                            fontSize: 13,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFD700),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 8,
+                    ),
+                    icon: const Icon(Icons.auto_awesome, color: Colors.black),
+                    label: Text(
+                      'SUPERAR PRUEBA SUPREMA Y ASCENDER A DIOS',
+                      style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.w900),
+                    ),
+                    onPressed: () async {
+                      await game.completeSupremeAscensionTrial();
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: const Color(0xFF0F172A),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: const BorderSide(color: Color(0xFFFFD700), width: 2),
+                            ),
+                            title: Text(
+                              '⚡ ¡ASCENSIÓN DIVINA LOGRADA! ⚡',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.orbitron(
+                                color: const Color(0xFFFFD700),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                              ),
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.stars, color: Color(0xFFFFD700), size: 64),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Has conquistado el nivel 100 y superado la prueba suprema del Olimpo.\n\nAhora eres: GOD OF OLIMPUS',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.rajdhani(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFFD700),
+                                  foregroundColor: Colors.black,
+                                ),
+                                onPressed: () => Navigator.pop(ctx),
+                                child: Text(
+                                  'RECLAMAR EL TRONO',
+                                  style: GoogleFonts.orbitron(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ]
                 else if (isBlockedByImbalance) ...[
                   // RED WARNING: IMBALANCE DETECTED
                   Container(

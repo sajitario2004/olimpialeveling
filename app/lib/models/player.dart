@@ -15,6 +15,7 @@ class Player {
   String? selectedDailyQuestId;
   int restTokens;
   bool isRestDayUsedToday;
+  bool hasCompletedSupremeTrial;
 
   Player({
     this.id = 'main_hunter',
@@ -31,9 +32,13 @@ class Player {
     this.selectedDailyQuestId,
     this.restTokens = 1,
     this.isRestDayUsedToday = false,
+    this.hasCompletedSupremeTrial = false,
   });
 
-  RankTier get rank => RankTier.getRankForLevel(totalLevel);
+  RankTier get rank => RankTier.getRankForLevel(
+        totalLevel,
+        hasCompletedSupremeTrial: hasCompletedSupremeTrial,
+      );
 
   int get rankIndex {
     final currentRank = rank;
@@ -74,6 +79,7 @@ class Player {
       'selected_daily_quest_id': selectedDailyQuestId,
       'rest_tokens': restTokens,
       'is_rest_day_used_today': isRestDayUsedToday ? 1 : 0,
+      'has_completed_supreme_trial': hasCompletedSupremeTrial ? 1 : 0,
     };
   }
 
@@ -93,6 +99,7 @@ class Player {
       selectedDailyQuestId: map['selected_daily_quest_id'],
       restTokens: map['rest_tokens'] ?? 1,
       isRestDayUsedToday: (map['is_rest_day_used_today'] == 1 || map['is_rest_day_used_today'] == true),
+      hasCompletedSupremeTrial: (map['has_completed_supreme_trial'] == 1 || map['has_completed_supreme_trial'] == true),
     );
   }
 }

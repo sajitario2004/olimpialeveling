@@ -85,14 +85,22 @@ class RankTier {
   ];
 
   /// Niveles de Cazador que exigen superar la prueba física/semanal para pasar al siguiente nivel y rango
-  static const Set<int> trialLevels = {4, 14, 29, 49, 64, 79, 98};
+  static const Set<int> trialLevels = {4, 14, 29, 49, 64, 79, 98, 100};
 
   static bool isTrialLevel(int level) => trialLevels.contains(level);
 
   /// Devuelve el rango para la escala de Nivel de Cazador de 0 a 100.
-  static RankTier getRankForHunterLevel(int hunterLevel) {
-    if (hunterLevel >= 99) return allRanks[7]; // GOD OF OLIMPUS (99-100)
-    if (hunterLevel >= 80) return allRanks[6]; // HERCULES (80-98)
+  /// En el nivel 100 se requiere superar la prueba suprema para ascender a GOD OF OLIMPUS;
+  /// de lo contrario, se permanece en HERCULES.
+  static RankTier getRankForHunterLevel(int hunterLevel, {bool hasCompletedSupremeTrial = false}) {
+    if (hunterLevel >= 100) {
+      if (hasCompletedSupremeTrial) {
+        return allRanks[7]; // GOD OF OLIMPUS (Cúspide Divina tras prueba suprema)
+      } else {
+        return allRanks[6]; // HERCULES (Nivel 100 previo a superar la prueba suprema)
+      }
+    }
+    if (hunterLevel >= 80) return allRanks[6]; // HERCULES (80-99)
     if (hunterLevel >= 65) return allRanks[5]; // SPARTAN (65-79)
     if (hunterLevel >= 50) return allRanks[4]; // SOLDIER (50-64)
     if (hunterLevel >= 30) return allRanks[3]; // GYMBRO (30-49)
@@ -101,5 +109,6 @@ class RankTier {
     return allRanks.first;                     // SKINNYBITCH (0-4)
   }
 
-  static RankTier getRankForLevel(int level) => getRankForHunterLevel(level);
+  static RankTier getRankForLevel(int level, {bool hasCompletedSupremeTrial = false}) =>
+      getRankForHunterLevel(level, hasCompletedSupremeTrial: hasCompletedSupremeTrial);
 }
