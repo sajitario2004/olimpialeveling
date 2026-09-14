@@ -65,6 +65,7 @@ olimpialeveling/
 │
 ├── app/                             # APLICACIÓN FLUTTER MULTIPLATAFORMA (iOS, Android, macOS)
 │   ├── pubspec.yaml                 # Dependencias (sqflite, crypto, provider, http, audioplayers, etc.)
+│   ├── pubspec.lock                 # Versiones exactas resueltas compatibles con Flutter 3.41+ y Dart 3.11+
 │   ├── analysis_options.yaml        # Reglas de linting y buenas prácticas de Dart
 │   │
 │   ├── assets/                      # Recursos multimedia y configuración embebida
@@ -161,9 +162,11 @@ olimpialeveling/
 │   │   └── app/src/main/AndroidManifest.xml  # Permisos de INTERNET y VIBRATE configurados
 │   │
 │   ├── ios/                         # Configuración nativa de iOS (iPhone / iPad)
+│   │   ├── Podfile                  # Configuración de CocoaPods nativo para plugins iOS
 │   │   └── Runner/Info.plist        # Configuración de NSAppTransportSecurity para red local
 │   │
 │   └── macos/                       # Configuración nativa de macOS Desktop para desarrollo y test local
+│       └── Podfile                  # Configuración de CocoaPods nativo para plugins macOS
 │
 └── server/                          # SERVIDOR Y DASHBOARD WEB EN PYTHON (FastAPI)
     ├── main.py                      # Aplicación FastAPI, endpoint /api/xp_curve, endpoints REST y rutas
