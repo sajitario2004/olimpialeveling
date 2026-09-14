@@ -28,6 +28,8 @@ class Exercise {
   final String? gifUrl;
   final String? youtubeUrl;
   final List<MuscleXpEntry> musclesXp;
+  final bool allowDropset;
+  final int maxDropsetMultiplier;
 
   Exercise({
     required this.id,
@@ -43,31 +45,43 @@ class Exercise {
     this.gifUrl,
     this.youtubeUrl,
     List<MuscleXpEntry>? musclesXp,
+    this.allowDropset = true,
+    this.maxDropsetMultiplier = 4,
   }) : musclesXp = musclesXp ?? [
           MuscleXpEntry(muscle: primaryMuscle, xp: primaryXpPerKg),
           if (secondaryMuscle != null && (secondaryXpPerKg ?? 0) > 0)
             MuscleXpEntry(muscle: secondaryMuscle, xp: secondaryXpPerKg!),
         ];
 
-  Map<String, double> calculateXp({required double weightKg, required int reps}) {
+  Map<String, double> calculateXp({
+    required double weightKg,
+    required int reps,
+    int dropsetDrops = 0,
+    int? customMultiplier,
+  }) {
+    final int dropsetMult = customMultiplier ??
+        (dropsetDrops > 0 && allowDropset
+            ? (1 + dropsetDrops).clamp(1, maxDropsetMultiplier)
+            : 1);
+
     if (musclesXp.isNotEmpty) {
       final Map<String, double> result = {};
       for (int i = 0; i < musclesXp.length; i++) {
         final entry = musclesXp[i];
         final base = i == 0 ? baseXp : (baseXp * 0.5);
-        final xp = (weightKg * entry.xp * reps) / 10.0 + base;
+        final xp = (((weightKg * entry.xp * reps) / 10.0) + base) * dropsetMult;
         result[entry.muscle] = double.parse(xp.toStringAsFixed(1));
       }
       return result;
     }
 
-    final primXp = (weightKg * primaryXpPerKg * reps) / 10.0 + baseXp;
+    final primXp = (((weightKg * primaryXpPerKg * reps) / 10.0) + baseXp) * dropsetMult;
     final Map<String, double> result = {
       primaryMuscle: double.parse(primXp.toStringAsFixed(1)),
     };
 
     if (secondaryMuscle != null && (secondaryXpPerKg ?? 0) > 0) {
-      final secXp = (weightKg * (secondaryXpPerKg!) * reps) / 10.0 + (baseXp * 0.5);
+      final secXp = (((weightKg * (secondaryXpPerKg!) * reps) / 10.0) + (baseXp * 0.5)) * dropsetMult;
       result[secondaryMuscle!] = double.parse(secXp.toStringAsFixed(1));
     }
     return result;
@@ -88,6 +102,8 @@ class Exercise {
       'gif_url': gifUrl,
       'youtube_url': youtubeUrl,
       'muscles_xp': musclesXp.map((e) => e.toMap()).toList(),
+      'allow_dropset': allowDropset ? 1 : 0,
+      'max_dropset_multiplier': maxDropsetMultiplier,
     };
   }
 
@@ -118,6 +134,8 @@ class Exercise {
       gifUrl: map['gif_url'],
       youtubeUrl: map['youtube_url'],
       musclesXp: mList,
+      allowDropset: map['allow_dropset'] == null || map['allow_dropset'] == true || map['allow_dropset'] == 1,
+      maxDropsetMultiplier: (map['max_dropset_multiplier'] as num?)?.toInt() ?? 4,
     );
   }
 }

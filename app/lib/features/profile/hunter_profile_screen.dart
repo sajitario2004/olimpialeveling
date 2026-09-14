@@ -7,11 +7,21 @@ import '../../providers/game_provider.dart';
 import 'widgets/rank_pyramid_dialog.dart';
 import '../routines/routine_editor_dialog.dart';
 import '../routines/routine_session_screen.dart';
+import '../dungeons/rank_dungeon_sheet.dart';
 
 /// Pestaña del perfil del cazador con avatar, cambio de nombre/clave, barra de nivel (azul oscuro / dorado),
 /// popup piramidal de rangos y menú scroll para gestión de rutinas.
 class HunterProfileScreen extends StatelessWidget {
   const HunterProfileScreen({super.key});
+
+  void _openRankDungeon(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const RankDungeonSheet(),
+    );
+  }
 
   void _openRankPyramid(BuildContext context, int level, String rankId) {
     showDialog(
@@ -511,6 +521,72 @@ class HunterProfileScreen extends StatelessWidget {
                             ),
                           ),
                         ),
+                        if (game.isAtTrialLevel) ...[
+                          const SizedBox(height: 12),
+                          InkWell(
+                            onTap: () => _openRankDungeon(context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    SystemTheme.spartanGold.withOpacity(0.25),
+                                    SystemTheme.dangerRed.withOpacity(0.2),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: SystemTheme.spartanGold, width: 1.8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: SystemTheme.spartanGold.withOpacity(0.25),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: SystemTheme.spartanGold.withOpacity(0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.military_tech, color: SystemTheme.spartanGold, size: 24),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '⚔️ ¡PRUEBA FÍSICA DE ASCENSIÓN!',
+                                          style: GoogleFonts.orbitron(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            color: SystemTheme.spartanGold,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Nivel $level alcanzado. Completa la prueba semanal para desbloquear el siguiente rango.',
+                                          style: GoogleFonts.rajdhani(
+                                            fontSize: 11,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(Icons.play_arrow, color: SystemTheme.spartanGold, size: 24),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

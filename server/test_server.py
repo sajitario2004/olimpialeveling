@@ -169,4 +169,65 @@ def test_create_exercise_with_4_muscles_and_media():
     del_res = client.delete("/api/exercises/press_banca_test_4m")
     assert del_res.status_code == 200
 
+def test_ranks_new_intervals():
+    response = client.get("/api/ranks")
+    assert response.status_code == 200
+    ranks = {r["id"]: r for r in response.json()}
+    assert ranks["skinnybitch"]["min_level"] == 0
+    assert ranks["skinnybitch"]["max_level"] == 4
+    assert ranks["human"]["min_level"] == 5
+    assert ranks["human"]["max_level"] == 14
+    assert ranks["normal_gym_buddy"]["min_level"] == 15
+    assert ranks["normal_gym_buddy"]["max_level"] == 29
+    assert ranks["gymbro"]["min_level"] == 30
+    assert ranks["gymbro"]["max_level"] == 49
+    assert ranks["soldier"]["min_level"] == 50
+    assert ranks["soldier"]["max_level"] == 64
+    assert ranks["spartan"]["min_level"] == 65
+    assert ranks["spartan"]["max_level"] == 79
+    assert ranks["hercules"]["min_level"] == 80
+    assert ranks["hercules"]["max_level"] == 98
+    assert ranks["god_of_olimpus"]["min_level"] == 99
+    assert ranks["god_of_olimpus"]["max_level"] == 100
+
+def test_level_99_to_100_xp_curve_is_20x():
+    from main import get_xp_required_for_level
+    xp_98 = get_xp_required_for_level(98)
+    xp_99 = get_xp_required_for_level(99)
+    assert xp_99 == round(xp_98 * 20.0, 1)
+
+def test_dropset_multipliers_x2_x3_x4():
+    # Press inclinado: deltoides 5 XP/kg, pecho 2 XP/kg, base_xp: 20
+    # Normal set (0 drops): total_xp = 450.0
+    res_normal = client.post("/api/calculate_xp", json={"exercise_id": "press_inclinado", "weight": 60.0, "reps": 10, "dropset_drops": 0})
+    assert res_normal.status_code == 200
+    base_xp = res_normal.json()["total_xp"]
+    assert base_xp == 450.0
+    assert res_normal.json()["dropset_multiplier"] == 1
+
+    # 1 drop (1 salto de peso) -> x2 XP
+    res_drop1 = client.post("/api/calculate_xp", json={"exercise_id": "press_inclinado", "weight": 60.0, "reps": 10, "dropset_drops": 1})
+    assert res_drop1.status_code == 200
+    assert res_drop1.json()["dropset_multiplier"] == 2
+    assert res_drop1.json()["total_xp"] == base_xp * 2
+
+    # 2 drops (2 saltos de peso) -> x3 XP
+    res_drop2 = client.post("/api/calculate_xp", json={"exercise_id": "press_inclinado", "weight": 60.0, "reps": 10, "dropset_drops": 2})
+    assert res_drop2.status_code == 200
+    assert res_drop2.json()["dropset_multiplier"] == 3
+    assert res_drop2.json()["total_xp"] == base_xp * 3
+
+    # 3 drops (3 saltos de peso) -> x4 XP (máximo)
+    res_drop3 = client.post("/api/calculate_xp", json={"exercise_id": "press_inclinado", "weight": 60.0, "reps": 10, "dropset_drops": 3})
+    assert res_drop3.status_code == 200
+    assert res_drop3.json()["dropset_multiplier"] == 4
+    assert res_drop3.json()["total_xp"] == base_xp * 4
+
+    # 5 drops -> capped at 4
+    res_drop5 = client.post("/api/calculate_xp", json={"exercise_id": "press_inclinado", "weight": 60.0, "reps": 10, "dropset_drops": 5})
+    assert res_drop5.status_code == 200
+    assert res_drop5.json()["dropset_multiplier"] == 4
+    assert res_drop5.json()["total_xp"] == base_xp * 4
+
+
 

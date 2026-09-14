@@ -35,18 +35,18 @@
 ---
 
 ## 3. Jerarquía del Olimpo: Los 8 Rangos
-El rango del Cazador se determina automáticamente en base a su **Nivel Total** (suma de los niveles de los 14 músculos):
+El rango del Cazador se determina automáticamente en base a su nivel unificado de 0 a 100 (y los niveles de los músculos individuales):
 
-| # | Rango (ID) | Nombre Mostrado | Nivel Mínimo | Color Neón | Descripción / Cita del Sistema |
-|---|------------|-----------------|--------------|------------|--------------------------------|
-| 1 | `skinnybitch` | **SKINNYBITCH** | 14 (Inicial) | `#64748B` (Gris Slate) | *"El inicio de todo despertar. Débil pero con potencial divino."* |
-| 2 | `human` | **HUMAN** | 25 | `#38BDF8` (Azul Cielo) | *"Has superado la fragilidad común. El hierro empieza a obedecerte."* |
-| 3 | `normal_gym_buddy` | **NORMAL GYM BUDDY** | 55 | `#06B6D4` (Azul Cian) | *"Tu presencia en el gimnasio ya es constante. Eres un compañero digno."* |
-| 4 | `gymbro` | **GYMBRO** | 95 | `#10B981` (Verde Esmeralda) | *"El sudor y la disciplina corren por tus venas. Respetado por tus pares."* |
-| 5 | `soldier` | **SOLDIER** | 150 | `#EAB308` (Oro Militar) | *"Disciplina militar espartana. El dolor es debilidad abandonando el cuerpo."* |
-| 6 | `spartan` | **SPARTAN** | 220 | `#F97316` (Naranja Ardiente) | *"¡Esto es Esparta! Ningún peso ni fatiga quebranta tu voluntad."* |
-| 7 | `hercules` | **HERCULES** | 300 | `#EF4444` (Rojo Carmesí) | *"Fuerza mitológica sobrehumana. Capaz de realizar los 12 trabajos."* |
-| 8 | `god_of_olimpus` | **GOD OF OLIMPUS** | 400+ | `#A855F7` (Púrpura Divino) | *"Ascensión celestial consumada. Te sientas en el trono del Olimpo."* |
+| # | Rango (ID) | Nombre Mostrado | Intervalo de Nivel | Prueba de Ascensión | Color Neón | Descripción / Cita del Sistema |
+|---|------------|-----------------|--------------------|---------------------|------------|--------------------------------|
+| 1 | `skinnybitch` | **SKINNYBITCH** | Niveles 0 - 4 | En Nivel 4 | `#94A3B8` (Gris Slate) | *"El inicio de todo despertar. Débil pero con potencial divino."* |
+| 2 | `human` | **HUMAN** | Niveles 5 - 14 | En Nivel 14 | `#38BDF8` (Azul Cielo) | *"Has superado la fragilidad común. El hierro empieza a obedecerte."* |
+| 3 | `normal_gym_buddy` | **NORMAL GYM BUDDY** | Niveles 15 - 29 | En Nivel 29 | `#06B6D4` (Azul Cian) | *"Tu presencia en el gimnasio ya es constante. Eres un compañero digno."* |
+| 4 | `gymbro` | **GYMBRO** | Niveles 30 - 49 | En Nivel 49 | `#10B981` (Verde Esmeralda) | *"El sudor y la disciplina corren por tus venas. Respetado por tus pares."* |
+| 5 | `soldier` | **SOLDIER** | Niveles 50 - 64 | En Nivel 64 | `#EAB308` (Oro Militar) | *"Disciplina militar espartana. El dolor es debilidad abandonando el cuerpo."* |
+| 6 | `spartan` | **SPARTAN** | Niveles 65 - 79 | En Nivel 79 | `#F97316` (Naranja Ardiente) | *"¡Esto es Esparta! Ningún peso ni fatiga quebranta tu voluntad."* |
+| 7 | `hercules` | **HERCULES** | Niveles 80 - 98 | En Nivel 98 | `#EF4444` (Rojo Carmesí) | *"Fuerza mitológica sobrehumana. Capaz de realizar los 12 trabajos."* |
+| 8 | `god_of_olimpus` | **GOD OF OLIMPUS** | Niveles 99 - 100 | Nivel 99 (20x XP) | `#A855F7` / `#FFD700` | *"Ascensión celestial consumada. Te sientas en el trono del Olimpo."* |
 
 ---
 
@@ -70,12 +70,14 @@ El rango del Cazador se determina automáticamente en base a su **Nivel Total** 
 
 ### Dinámica del Mapa de Calor (Heat Map)
 Cada músculo tiene su propio nivel independiente. Su representación gráfica cambia dinámicamente de color según su nivel:
-- **Nivel 1 a 4**: `#64748B` (Gris / Skinny)
-- **Nivel 5 a 14**: `#00F0FF` (Azul Neón del Sistema)
-- **Nivel 15 a 29**: `#10B981` (Verde Cazador)
-- **Nivel 30 a 49**: `#F59E0B` (Oro Espartano)
-- **Nivel 50 a 79**: `#EF4444` (Rojo Carmesí de Hércules)
-- **Nivel 80+**: `#A855F7` (Púrpura Resplandeciente de Dios del Olimpo)
+- **Nivel 0 a 4**: `#64748B` (Gris / Skinnybitch)
+- **Nivel 5 a 14**: `#38BDF8` (Azul Neón / Human)
+- **Nivel 15 a 29**: `#06B6D4` (Cian / Normal Gym Buddy)
+- **Nivel 30 a 49**: `#10B981` (Verde Cazador / Gymbro)
+- **Nivel 50 a 64**: `#EAB308` (Oro Militar / Soldier)
+- **Nivel 65 a 79**: `#F97316` (Naranja Ardiente / Spartan)
+- **Nivel 80 a 98**: `#EF4444` (Rojo Carmesí / Hercules)
+- **Nivel 99 a 100**: `#A855F7` / `#FFD700` (Púrpura y Oro Divino / God of Olimpus)
 
 ---
 
@@ -86,11 +88,12 @@ Para pasar del nivel $L$ al nivel $L+1$:
 - **Nivel 1**: 100 XP
 - **Nivel 2**: 200 XP
 - **Nivel 3**: 300 XP
-- **Nivel 4**: 400 XP
+- **Nivel 4**: 400 XP (Requiere prueba física para subir a Nivel 5)
 - **Nivel 5 ➔ 6**: 1,000 XP
-- **Nivel $L \ge 6$**: Incremento recursivo del **15% compuesto** sobre el nivel anterior:
+- **Nivel $6 \le L \le 98$**: Incremento recursivo del **15% compuesto** sobre el nivel anterior:
 $$\text{XP}(L) = 1000 \times 1.15^{(L - 5)}$$
-*(Ejemplos: Nivel 6 = 1,150 XP; Nivel 7 = 1,322.5 XP; Nivel 8 = 1,520.9 XP; etc.)*
+- **Nivel 99 ➔ 100 (Cúspide Divina)**: Se requieren **20 veces más XP** que para pasar de 98 a 99:
+$$\text{XP}(99 \to 100) = \text{XP}(98 \to 99) \times 20.0 = (1000 \times 1.15^{93}) \times 20.0$$
 
 ### 2. Multiplicador de Racha de Días (Streak XP Bonus)
 Recompensa acumulativa por constancia diaria:
@@ -98,13 +101,16 @@ Recompensa acumulativa por constancia diaria:
 - **7 a 29 días de racha**: Multiplicador $1.05\times$ (**+5% XP adicional** en todos los ejercicios)
 - **30 días o más de racha**: Multiplicador $1.10\times$ (**+10% XP adicional** en todos los ejercicios)
 
-### 3. Nivel Total del Jugador
-El Nivel Total es la suma exacta de los niveles de los 14 músculos individuales:
-$$\text{Total Level} = \sum_{i=1}^{14} \text{Nivel Músculo}_i$$
+### 3. Mecánica Drop Set (Multiplicadores de Saltos de Peso)
+Cuando un cazador realiza reducciones de peso consecutivas tras el fallo sin descanso en la misma serie:
+- **0 Saltos (Normal)**: Multiplicador $1\times$ XP.
+- **1 Salto**: Multiplicador $2\times$ XP.
+- **2 Saltos**: Multiplicador $3\times$ XP.
+- **3 o más Saltos**: Multiplicador $4\times$ XP (límite máximo $4\times$).
 
 ### 4. Fórmulas de XP por Ejercicio
-$$\text{XP}_{\text{primaria}} = \left(\frac{\text{Peso (kg)} \times \text{Multiplicador}_{\text{primario}} \times \text{Reps}}{10} + \text{Base XP}\right) \times \text{StreakMultiplier}$$
-$$\text{XP}_{\text{secundaria}} = \left(\frac{\text{Peso (kg)} \times \text{Multiplicador}_{\text{secundario}} \times \text{Reps}}{10} + (\text{Base XP} \times 0.5)\right) \times \text{StreakMultiplier}$$
+$$\text{XP}_{\text{primaria}} = \left(\frac{\text{Peso (kg)} \times \text{Multiplicador}_{\text{primario}} \times \text{Reps}}{10} + \text{Base XP}\right) \times \text{DropsetMultiplier} \times \text{StreakMultiplier}$$
+$$\text{XP}_{\text{secundaria}} = \left(\frac{\text{Peso (kg)} \times \text{Multiplicador}_{\text{secundario}} \times \text{Reps}}{10} + (\text{Base XP} \times 0.5)\right) \times \text{DropsetMultiplier} \times \text{StreakMultiplier}$$
 
 ---
 

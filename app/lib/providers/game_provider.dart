@@ -96,6 +96,9 @@ class GameProvider extends ChangeNotifier {
   /// Rango del jugador en la escala 1..100
   RankTier get hunterRank => RankTier.getRankForHunterLevel(hunterLevel);
 
+  /// Indica si el cazador se encuentra en un nivel que requiere prueba física semanal para ascender
+  bool get isAtTrialLevel => RankTier.isTrialLevel(hunterLevel);
+
   void clearPrAlert() {
     _prAlert = null;
     notifyListeners();
@@ -275,6 +278,8 @@ class GameProvider extends ChangeNotifier {
     required Exercise exercise,
     required double weightKg,
     required int reps,
+    int dropsetDrops = 0,
+    int? customMultiplier,
   }) async {
     if (_player == null) return false;
 
@@ -295,7 +300,12 @@ class GameProvider extends ChangeNotifier {
 
     // Apply streak multiplier (7 days -> +5%, 30 days -> +10%)
     final streakMultiplier = _player!.streakXpMultiplier;
-    final xpDistribution = exercise.calculateXp(weightKg: weightKg, reps: safeReps);
+    final xpDistribution = exercise.calculateXp(
+      weightKg: weightKg,
+      reps: safeReps,
+      dropsetDrops: dropsetDrops,
+      customMultiplier: customMultiplier,
+    );
 
     // Check for Personal Record (PR)
     final priorMax = await _db.getMaxWeightForExercise(exercise.id);

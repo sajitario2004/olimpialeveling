@@ -32,6 +32,7 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
   late int _actualReps;
   late double _actualWeight;
   int _addedBonusRest = 0;
+  int _dropsetDrops = 0;
 
   // Estadísticas acumuladas de la sesión
   double _sessionTotalXp = 0.0;
@@ -58,6 +59,7 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
     _actualReps = current.targetReps;
     _actualWeight = current.targetWeightKg;
     _addedBonusRest = 0;
+    _dropsetDrops = 0;
   }
 
   void _onFinishSetPressed() {
@@ -104,12 +106,18 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
       exercise: fullExercise,
       weightKg: _actualWeight,
       reps: _actualReps,
+      dropsetDrops: _dropsetDrops,
     );
 
     // Reproducir feedback sonoro
     AudioService.instance.playLevelUp();
 
-    final xpGain = (_actualWeight * 5.0 * _actualReps) / 10.0 + fullExercise.baseXp;
+    final xpGainMap = fullExercise.calculateXp(
+      weightKg: _actualWeight,
+      reps: _actualReps,
+      dropsetDrops: _dropsetDrops,
+    );
+    final xpGain = xpGainMap.values.fold(0.0, (a, b) => a + b);
     _sessionTotalXp += xpGain;
     _totalSetsCompleted += 1;
 
@@ -456,7 +464,62 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
             },
             onPlus: () => setState(() => _actualWeight += 2.5),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+
+          // SELECCIÓN DE DROP SET (SALTOS DE PESO)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF131C31),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _dropsetDrops > 0 ? SystemTheme.neonCyan : Colors.white12,
+                width: _dropsetDrops > 0 ? 1.5 : 1.0,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.electric_bolt,
+                      color: _dropsetDrops > 0 ? SystemTheme.neonCyan : Colors.white60,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'MECÁNICA DROP SET (SALTOS DE PESO)',
+                        style: GoogleFonts.orbitron(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: _dropsetDrops > 0 ? SystemTheme.neonCyan : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Si redujiste el peso sin descanso tras el fallo, selecciona los saltos para multiplicar la XP:',
+                  style: GoogleFonts.rajdhani(fontSize: 11.5, color: Colors.white70),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildDropsetOptionChip(0, 'Normal', 'x1 XP'),
+                    _buildDropsetOptionChip(1, '1 Salto', 'x2 XP'),
+                    _buildDropsetOptionChip(2, '2 Saltos', 'x3 XP'),
+                    _buildDropsetOptionChip(3, '3+ Saltos', 'x4 XP'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // BOTONES DE AÑADIR TIEMPO AL CONTADOR (+15s)
           Container(
@@ -743,6 +806,46 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
           const SizedBox(height: 2),
           Text(value, style: GoogleFonts.orbitron(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDropsetOptionChip(int drops, String label, String multiplier) {
+    final isSelected = _dropsetDrops == drops;
+    return InkWell(
+      onTap: () => setState(() => _dropsetDrops = drops),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? SystemTheme.neonCyan.withOpacity(0.18) : const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? SystemTheme.neonCyan : Colors.white24,
+            width: isSelected ? 1.8 : 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.orbitron(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? SystemTheme.neonCyan : Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              multiplier,
+              style: GoogleFonts.rajdhani(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: isSelected ? Colors.amber : Colors.white54,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

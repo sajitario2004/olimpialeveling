@@ -17,7 +17,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'god_of_olimpus',
       'name': 'GOD OF OLIMPUS',
-      'levelText': 'Nivel 100 (Cúspide Divina)',
+      'levelText': 'Nivel 99 - 100 (Cúspide Divina - 20x XP)',
       'color': Color(0xFFFFD700),
       'secondaryColor': Color(0xFFA855F7),
       'quote': 'Ascensión celestial consumada. Trono del Olimpo alcanzado.',
@@ -26,7 +26,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'hercules',
       'name': 'HERCULES',
-      'levelText': 'Nivel 85 - 99',
+      'levelText': 'Nivel 80 - 98 (Prueba en Nivel 98)',
       'color': Color(0xFFEF4444),
       'secondaryColor': Color(0xFFB91C1C),
       'quote': 'Fuerza mitológica legendaria sobrehumana.',
@@ -35,7 +35,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'spartan',
       'name': 'SPARTAN',
-      'levelText': 'Nivel 70 - 84',
+      'levelText': 'Nivel 65 - 79 (Prueba en Nivel 79)',
       'color': Color(0xFFF97316),
       'secondaryColor': Color(0xFFC2410C),
       'quote': '¡Gloria en la batalla contra el hierro! Voluntad inquebrantable.',
@@ -44,7 +44,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'soldier',
       'name': 'SOLDIER',
-      'levelText': 'Nivel 55 - 69',
+      'levelText': 'Nivel 50 - 64 (Prueba en Nivel 64)',
       'color': Color(0xFFEAB308),
       'secondaryColor': Color(0xFFA16207),
       'quote': 'Disciplina militar espartana. El dolor es debilidad abandonando el cuerpo.',
@@ -53,7 +53,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'gymbro',
       'name': 'GYMBRO',
-      'levelText': 'Nivel 40 - 54',
+      'levelText': 'Nivel 30 - 49 (Prueba en Nivel 49)',
       'color': Color(0xFF10B981),
       'secondaryColor': Color(0xFF047857),
       'quote': 'Hermano del hierro respetado por todos en la sala.',
@@ -62,7 +62,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'normal_gym_buddy',
       'name': 'NORMAL GYM BUDDY',
-      'levelText': 'Nivel 25 - 39',
+      'levelText': 'Nivel 15 - 29 (Prueba en Nivel 29)',
       'color': Color(0xFF06B6D4),
       'secondaryColor': Color(0xFF0E7490),
       'quote': 'Constancia forjada entrenamiento a entrenamiento.',
@@ -71,7 +71,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'human',
       'name': 'HUMAN',
-      'levelText': 'Nivel 10 - 24',
+      'levelText': 'Nivel 5 - 14 (Prueba en Nivel 14)',
       'color': Color(0xFF38BDF8),
       'secondaryColor': Color(0xFF0284C7),
       'quote': 'Superando la debilidad ordinaria cotidiana.',
@@ -80,7 +80,7 @@ class RankPyramidDialog extends StatelessWidget {
     {
       'id': 'skinnybitch',
       'name': 'SKINNYBITCH',
-      'levelText': 'Nivel 1 - 9 (Base)',
+      'levelText': 'Nivel 0 - 4 (Prueba en Nivel 4)',
       'color': Color(0xFF94A3B8),
       'secondaryColor': Color(0xFF475569),
       'quote': 'El punto de partida del despertar. Todo dios fue mortal.',
@@ -216,8 +216,8 @@ class RankPyramidDialog extends StatelessWidget {
                           children: pyramidTiers.map((tier) {
                             final tierId = tier['id'] as String;
                             final isCurrentRank = tierId == currentRankId ||
-                                (playerLevel >= 100 && tierId == 'god_of_olimpus') ||
-                                (playerLevel < 10 && tierId == 'skinnybitch');
+                                (playerLevel >= 99 && tierId == 'god_of_olimpus') ||
+                                (playerLevel < 5 && tierId == 'skinnybitch');
                             final color = tier['color'] as Color;
                             final widthFactor = (tier['widthFactor'] as num).toDouble();
                             final blockWidth = maxWidth * widthFactor;
@@ -353,7 +353,7 @@ class RankPyramidDialog extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Alcanza el Nivel 100 entrenando los 14 músculos del cuerpo para coronarte como God of Olimpus. Para acceder a Mazmorras Semanales, ningún músculo puede estar a más de 2 rangos por debajo de tu rango actual.',
+                            'Alcanza el Nivel 100 entrenando los 14 músculos del cuerpo para coronarte como God of Olimpus. En los niveles 4, 14, 29, 49, 64, 79 y 98 debes superar la Prueba Semanal de Ascensión para desbloquear el siguiente rango. Del nivel 99 al 100 se requiere 20x más XP.',
                             style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white70),
                           ),
                         ],

@@ -17,14 +17,21 @@ void main() {
       expect(ranks.last.name, 'GOD OF OLIMPUS');
 
       // Check level thresholds
-      expect(RankTier.getRankForLevel(14).name, 'SKINNYBITCH');
-      expect(RankTier.getRankForLevel(25).name, 'HUMAN');
-      expect(RankTier.getRankForLevel(55).name, 'NORMAL GYM BUDDY');
-      expect(RankTier.getRankForLevel(95).name, 'GYMBRO');
-      expect(RankTier.getRankForLevel(150).name, 'SOLDIER');
-      expect(RankTier.getRankForLevel(220).name, 'SPARTAN');
-      expect(RankTier.getRankForLevel(300).name, 'HERCULES');
-      expect(RankTier.getRankForLevel(450).name, 'GOD OF OLIMPUS');
+      expect(RankTier.getRankForLevel(4).name, 'SKINNYBITCH');
+      expect(RankTier.getRankForLevel(5).name, 'HUMAN');
+      expect(RankTier.getRankForLevel(14).name, 'HUMAN');
+      expect(RankTier.getRankForLevel(15).name, 'NORMAL GYM BUDDY');
+      expect(RankTier.getRankForLevel(29).name, 'NORMAL GYM BUDDY');
+      expect(RankTier.getRankForLevel(30).name, 'GYMBRO');
+      expect(RankTier.getRankForLevel(49).name, 'GYMBRO');
+      expect(RankTier.getRankForLevel(50).name, 'SOLDIER');
+      expect(RankTier.getRankForLevel(64).name, 'SOLDIER');
+      expect(RankTier.getRankForLevel(65).name, 'SPARTAN');
+      expect(RankTier.getRankForLevel(79).name, 'SPARTAN');
+      expect(RankTier.getRankForLevel(80).name, 'HERCULES');
+      expect(RankTier.getRankForLevel(98).name, 'HERCULES');
+      expect(RankTier.getRankForLevel(99).name, 'GOD OF OLIMPUS');
+      expect(RankTier.getRankForLevel(100).name, 'GOD OF OLIMPUS');
     });
 
     test('Cálculo de XP de ejercicio por peso y repeticiones (Press inclinado)', () {
@@ -105,13 +112,13 @@ void main() {
 
     test('Penalización de medianoche descuenta 1 nivel', () {
       final player = Player(
-        totalLevel: 25,
+        totalLevel: 5,
         lastActiveDate: '2026-09-13',
       );
 
       expect(player.rank.name, 'HUMAN');
       player.totalLevel -= 1;
-      expect(player.totalLevel, 24);
+      expect(player.totalLevel, 4);
       expect(player.rank.name, 'SKINNYBITCH');
     });
 
@@ -304,22 +311,80 @@ void main() {
       expect(copied.rankIndex, 2); // NORMAL GYM BUDDY
     });
 
-    test('RankTier.getRankForHunterLevel escala de nivel 1 a 100 con God of Olimpus en 100', () {
-      expect(RankTier.getRankForHunterLevel(1).name, 'SKINNYBITCH');
-      expect(RankTier.getRankForHunterLevel(9).name, 'SKINNYBITCH');
-      expect(RankTier.getRankForHunterLevel(10).name, 'HUMAN');
-      expect(RankTier.getRankForHunterLevel(24).name, 'HUMAN');
-      expect(RankTier.getRankForHunterLevel(25).name, 'NORMAL GYM BUDDY');
-      expect(RankTier.getRankForHunterLevel(39).name, 'NORMAL GYM BUDDY');
-      expect(RankTier.getRankForHunterLevel(40).name, 'GYMBRO');
-      expect(RankTier.getRankForHunterLevel(54).name, 'GYMBRO');
-      expect(RankTier.getRankForHunterLevel(55).name, 'SOLDIER');
-      expect(RankTier.getRankForHunterLevel(69).name, 'SOLDIER');
-      expect(RankTier.getRankForHunterLevel(70).name, 'SPARTAN');
-      expect(RankTier.getRankForHunterLevel(84).name, 'SPARTAN');
-      expect(RankTier.getRankForHunterLevel(85).name, 'HERCULES');
-      expect(RankTier.getRankForHunterLevel(99).name, 'HERCULES');
+    test('RankTier.getRankForHunterLevel escala de nivel 0 a 100 con God of Olimpus en 99-100', () {
+      expect(RankTier.getRankForHunterLevel(0).name, 'SKINNYBITCH');
+      expect(RankTier.getRankForHunterLevel(4).name, 'SKINNYBITCH');
+      expect(RankTier.getRankForHunterLevel(5).name, 'HUMAN');
+      expect(RankTier.getRankForHunterLevel(14).name, 'HUMAN');
+      expect(RankTier.getRankForHunterLevel(15).name, 'NORMAL GYM BUDDY');
+      expect(RankTier.getRankForHunterLevel(29).name, 'NORMAL GYM BUDDY');
+      expect(RankTier.getRankForHunterLevel(30).name, 'GYMBRO');
+      expect(RankTier.getRankForHunterLevel(49).name, 'GYMBRO');
+      expect(RankTier.getRankForHunterLevel(50).name, 'SOLDIER');
+      expect(RankTier.getRankForHunterLevel(64).name, 'SOLDIER');
+      expect(RankTier.getRankForHunterLevel(65).name, 'SPARTAN');
+      expect(RankTier.getRankForHunterLevel(79).name, 'SPARTAN');
+      expect(RankTier.getRankForHunterLevel(80).name, 'HERCULES');
+      expect(RankTier.getRankForHunterLevel(98).name, 'HERCULES');
+      expect(RankTier.getRankForHunterLevel(99).name, 'GOD OF OLIMPUS');
       expect(RankTier.getRankForHunterLevel(100).name, 'GOD OF OLIMPUS');
+    });
+
+    test('Niveles de prueba física semanal de ascenso (4, 14, 29, 49, 64, 79, 98)', () {
+      expect(RankTier.isTrialLevel(4), true);
+      expect(RankTier.isTrialLevel(14), true);
+      expect(RankTier.isTrialLevel(29), true);
+      expect(RankTier.isTrialLevel(49), true);
+      expect(RankTier.isTrialLevel(64), true);
+      expect(RankTier.isTrialLevel(79), true);
+      expect(RankTier.isTrialLevel(98), true);
+
+      // Niveles no prueba
+      expect(RankTier.isTrialLevel(0), false);
+      expect(RankTier.isTrialLevel(5), false);
+      expect(RankTier.isTrialLevel(15), false);
+      expect(RankTier.isTrialLevel(30), false);
+      expect(RankTier.isTrialLevel(99), false);
+      expect(RankTier.isTrialLevel(100), false);
+    });
+
+    test('Nivel 99 a 100 requiere 20 veces más XP que nivel 98 a 99', () {
+      final m98 = Muscle(id: 'pecho', name: 'Pecho', category: 'front', level: 98);
+      final xp98 = m98.xpForNextLevel;
+
+      final m99 = Muscle(id: 'pecho', name: 'Pecho', category: 'front', level: 99);
+      final xp99 = m99.xpForNextLevel;
+
+      expect(xp99, closeTo(xp98 * 20.0, 0.01));
+
+      final m100 = Muscle(id: 'pecho', name: 'Pecho', category: 'front', level: 100);
+      expect(m100.xpForNextLevel, 0.0);
+    });
+
+    test('Mecánica Drop Set multiplica la XP x2 (1 salto), x3 (2 saltos), x4 (3+ saltos)', () {
+      final exercise = Exercise(
+        id: 'curl_biceps',
+        name: 'Curl Bíceps',
+        description: 'Aislamiento de bíceps',
+        primaryMuscle: 'biceps',
+        primaryXpPerKg: 5.0,
+        baseXp: 20.0,
+      );
+      // Base: (30 * 5 * 10)/10 + 20 = 150 + 20 = 170
+      final xp0 = exercise.calculateXp(weightKg: 30, reps: 10, dropsetDrops: 0);
+      expect(xp0['biceps'], 170.0);
+
+      final xp1 = exercise.calculateXp(weightKg: 30, reps: 10, dropsetDrops: 1);
+      expect(xp1['biceps'], 340.0); // 170 * 2
+
+      final xp2 = exercise.calculateXp(weightKg: 30, reps: 10, dropsetDrops: 2);
+      expect(xp2['biceps'], 510.0); // 170 * 3
+
+      final xp3 = exercise.calculateXp(weightKg: 30, reps: 10, dropsetDrops: 3);
+      expect(xp3['biceps'], 680.0); // 170 * 4
+
+      final xp5 = exercise.calculateXp(weightKg: 30, reps: 10, dropsetDrops: 5);
+      expect(xp5['biceps'], 680.0); // Capped at max 4x
     });
 
     test('Ejercicio con hasta 4 músculos distribuye XP correctamente a todos ellos', () {

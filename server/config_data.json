@@ -88,59 +88,67 @@
   "ranks": [
     {
       "id": "skinnybitch",
-      "name": "Skinny Bitch",
-      "min_level": 14,
+      "name": "SKINNYBITCH",
+      "min_level": 0,
+      "max_level": 4,
       "color": "#64748b",
-      "quote": "El inicio de todo despertar. Débil pero con potencial divino."
+      "quote": "El inicio de todo despertar. Débil pero con potencial divino. Prueba semanal para ascender en Nivel 4."
     },
     {
       "id": "human",
-      "name": "Human",
-      "min_level": 25,
-      "color": "#3b82f6",
-      "quote": "Has superado la fragilidad común. El hierro empieza a obedecerte."
+      "name": "HUMAN",
+      "min_level": 5,
+      "max_level": 14,
+      "color": "#38bdf8",
+      "quote": "Has superado la fragilidad común. El hierro empieza a obedecerte. Prueba física en Nivel 14."
     },
     {
       "id": "normal_gym_buddy",
-      "name": "Normal Gym Buddy",
-      "min_level": 55,
+      "name": "NORMAL GYM BUDDY",
+      "min_level": 15,
+      "max_level": 29,
       "color": "#06b6d4",
-      "quote": "Tu presencia en el gimnasio ya es constante. Eres un compañero digno."
+      "quote": "Tu presencia en el gimnasio ya es constante. Eres un compañero digno. Prueba física en Nivel 29."
     },
     {
       "id": "gymbro",
-      "name": "Gymbro",
-      "min_level": 95,
+      "name": "GYMBRO",
+      "min_level": 30,
+      "max_level": 49,
       "color": "#10b981",
-      "quote": "El sudor y la disciplina corren por tus venas. Respetado por tus pares."
+      "quote": "El sudor y la disciplina corren por tus venas. Respetado por tus pares. Prueba física en Nivel 49."
     },
     {
       "id": "soldier",
-      "name": "Soldier",
-      "min_level": 150,
+      "name": "SOLDIER",
+      "min_level": 50,
+      "max_level": 64,
       "color": "#eab308",
-      "quote": "Disciplina militar espartana. El dolor es solo debilidad abandonando el cuerpo."
+      "quote": "Disciplina militar espartana. El dolor es debilidad abandonando el cuerpo. Prueba física en Nivel 64."
     },
     {
       "id": "spartan",
-      "name": "Spartan",
-      "min_level": 220,
+      "name": "SPARTAN",
+      "min_level": 65,
+      "max_level": 79,
       "color": "#f97316",
-      "quote": "¡Esto es Esparta! Ningún peso ni fatiga quebranta tu voluntad."
+      "quote": "¡Esto es Esparta! Ningún peso ni fatiga quebranta tu voluntad. Prueba física en Nivel 79."
     },
     {
       "id": "hercules",
-      "name": "Hercules",
-      "min_level": 300,
+      "name": "HERCULES",
+      "min_level": 80,
+      "max_level": 98,
       "color": "#ef4444",
-      "quote": "Fuerza mitológica sobrehumana. Capaz de realizar los 12 trabajos."
+      "quote": "Fuerza mitológica sobrehumana. Capaz de realizar los 12 trabajos. Prueba física en Nivel 98."
     },
     {
       "id": "god_of_olimpus",
-      "name": "God of Olimpus",
-      "min_level": 400,
+      "name": "GOD OF OLIMPUS",
+      "min_level": 99,
+      "max_level": 100,
       "color": "#a855f7",
-      "quote": "Ascensión celestial completada. Te sientas en el trono del Olimpo."
+      "quote": "Ascensión celestial consumada. Te sientas en el trono del Olimpo. El Nivel 100 exige 20x XP divina."
     }
   ],
   "level_intervals": [

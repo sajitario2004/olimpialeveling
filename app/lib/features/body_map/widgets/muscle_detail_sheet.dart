@@ -22,6 +22,7 @@ class _MuscleDetailSheetState extends State<MuscleDetailSheet> {
   Exercise? _selectedExercise;
   double _weight = 60.0;
   int _reps = 10;
+  int _dropsetDrops = 0;
   bool _isSaving = false;
 
   @override
@@ -49,7 +50,11 @@ class _MuscleDetailSheetState extends State<MuscleDetailSheet> {
         double previewPrimaryXp = 0;
         double previewSecondaryXp = 0;
         if (_selectedExercise != null) {
-          final xpMap = _selectedExercise!.calculateXp(weightKg: _weight, reps: _reps);
+          final xpMap = _selectedExercise!.calculateXp(
+            weightKg: _weight,
+            reps: _reps,
+            dropsetDrops: _dropsetDrops,
+          );
           previewPrimaryXp = xpMap[_selectedExercise!.primaryMuscle] ?? 0;
           if (_selectedExercise!.secondaryMuscle != null) {
             previewSecondaryXp = xpMap[_selectedExercise!.secondaryMuscle!] ?? 0;
@@ -526,6 +531,61 @@ class _MuscleDetailSheetState extends State<MuscleDetailSheet> {
                   ],
                 ),
 
+                const SizedBox(height: 14),
+
+                // DROP SET SELECTOR (SALTOS DE PESO)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF101827),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _dropsetDrops > 0 ? SystemTheme.neonCyan : Colors.white12,
+                      width: _dropsetDrops > 0 ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.electric_bolt,
+                            size: 15,
+                            color: _dropsetDrops > 0 ? SystemTheme.neonCyan : Colors.white60,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'DROP SET (SALTOS DE PESO)',
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: _dropsetDrops > 0 ? SystemTheme.neonCyan : Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _buildDropsetChip(0, 'Normal (x1)'),
+                          _buildDropsetChip(1, '1 Salto (x2 XP)'),
+                          _buildDropsetChip(2, '2 Saltos (x3 XP)'),
+                          _buildDropsetChip(3, '3+ Saltos (x4 XP)'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 16),
 
                 // Submit Button
@@ -539,6 +599,7 @@ class _MuscleDetailSheetState extends State<MuscleDetailSheet> {
                             exercise: _selectedExercise!,
                             weightKg: _weight,
                             reps: _reps,
+                            dropsetDrops: _dropsetDrops,
                           );
                           setState(() => _isSaving = false);
                           if (context.mounted) {
@@ -592,6 +653,33 @@ class _MuscleDetailSheetState extends State<MuscleDetailSheet> {
             ),
           ),
         );
+      },
+    );
+  }
+
+  Widget _buildDropsetChip(int drops, String label) {
+    final isSelected = _dropsetDrops == drops;
+    return ChoiceChip(
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      label: Text(
+        label,
+        style: GoogleFonts.orbitron(
+          fontSize: 9.5,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.black : Colors.white70,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: SystemTheme.neonCyan,
+      backgroundColor: const Color(0xFF1E293B),
+      side: BorderSide(
+        color: isSelected ? SystemTheme.neonCyan : Colors.white24,
+      ),
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _dropsetDrops = drops);
+        }
       },
     );
   }

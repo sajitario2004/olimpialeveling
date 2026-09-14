@@ -200,4 +200,33 @@
       - **10/10 tests en Python (100% verde)** con `pytest`.
       - **0 errores y 0 advertencias** en `flutter analyze`.
 
+30. **Nuevos Intervalos de Rango Oficiales, Pruebas de Ascensión (Niveles 4, 14, 29, 49, 64, 79, 98), Curva x20 XP para Nivel 100 y Mecánica Drop Set (x2, x3, x4 XP)**:
+    - **Nuevos Intervalos de Rangos Oficiales**:
+      - `skinnybitch`: Niveles 0 a 4 (en nivel 4 requiere prueba semanal física para subir al 5).
+      - `human`: Niveles 5 a 14 (en nivel 14 requiere prueba para subir al 15).
+      - `normal_gym_buddy`: Niveles 15 a 29 (en nivel 29 requiere prueba para subir al 30).
+      - `gymbro`: Niveles 30 a 49 (en nivel 49 requiere prueba para subir al 50).
+      - `soldier`: Niveles 50 a 64 (en nivel 64 requiere prueba para subir al 65).
+      - `spartan`: Niveles 65 a 79 (en nivel 79 requiere prueba para subir al 80).
+      - `hercules`: Niveles 80 a 98 (en nivel 98 requiere prueba para subir al 99).
+      - `god_of_olimpus`: Niveles 99 a 100.
+    - **Requisito 20x XP para Nivel 100**:
+      - Para ascender del nivel 99 al 100, se requiere exactamente 20 veces más XP que de 98 a 99 ($XP_{99 \to 100} = XP_{98 \to 99} \times 20.0$), implementado en Dart (`Muscle.xpForNextLevel`) y en el servidor Python (`server/main.py`).
+    - **Mecánica Drop Set en Backend y Frontend**:
+      - Configuración en panel web Python (`main.py`, `templates/index.html`): soporte para activar Drop Sets por ejercicio y simulación en vivo de multiplicadores.
+      - Implementación en Flutter (`Exercise.calculateXp`, `GameProvider.logWorkout`, `RoutineSessionScreen` y `MuscleDetailSheet`):
+        - Normal (0 saltos): multiplicador $1\times$ XP.
+        - 1 Salto de peso: multiplicador $2\times$ XP.
+        - 2 Saltos de peso: multiplicador $3\times$ XP.
+        - 3 o más saltos de peso: multiplicador $4\times$ XP (límite máximo de $4\times$).
+    - **Pruebas de Ascensión & Banner Táctico en Perfil**:
+      - Detección reactiva mediante `isAtTrialLevel` (niveles 4, 14, 29, 49, 64, 79 y 98).
+      - Banner de alerta visual en `HunterProfileScreen` con acceso directo a `RankDungeonSheet` para realizar la prueba física de ascenso de rango.
+      - Actualización íntegra de `RankPyramidDialog` con los nuevos intervalos, notas de prueba y requisito 20x.
+    - **Batería de Pruebas y Verificación**:
+      - **58/58 tests en Flutter (100% verde)** en `app/test/`.
+      - **13/13 tests en Python (100% verde)** en `server/test_server.py`.
+      - **0 errores y 0 warnings** en `flutter analyze`.
+
+
 

@@ -64,6 +64,14 @@ def get_xp_required_for_level(level: int) -> float:
     if level == 3: return 300.0
     if level == 4: return 400.0
     if level == 5: return float(base_6)
+    
+    if level == 99:
+        # Para subir al nivel 100 hacen falta unas 20 veces más XP que del nivel 98 al 99
+        xp_98 = float(base_6)
+        for _ in range(5, 98):
+            xp_98 *= multiplier
+        return round(xp_98 * 20.0, 1)
+
     xp = float(base_6)
     for _ in range(5, level):
         xp *= multiplier
@@ -111,11 +119,15 @@ class ExerciseItem(BaseModel):
     gif_url: Optional[str] = ""
     youtube_url: Optional[str] = ""
     muscles_xp: Optional[List[Dict[str, Any]]] = None
+    allow_dropset: bool = True
+    max_dropset_multiplier: int = 4
+    special_mechanics: Optional[List[str]] = ["dropset"]
 
 class RankItem(BaseModel):
     id: str
     name: str
     min_level: int
+    max_level: Optional[int] = 100
     color: str
     quote: str
 
@@ -123,6 +135,8 @@ class XPCalculationRequest(BaseModel):
     exercise_id: str
     weight: float
     reps: int
+    dropset_drops: int = 0
+    dropset_multiplier: Optional[int] = None
 
 class PlayerSyncRequest(BaseModel):
     player_id: str = "main_hunter"
@@ -285,6 +299,14 @@ async def calculate_xp(req: XPCalculationRequest):
     if not exercise:
         raise HTTPException(status_code=404, detail="Ejercicio no encontrado")
 
+    max_mult = exercise.get("max_dropset_multiplier", 4)
+    if req.dropset_multiplier is not None:
+        dropset_mult = max(1, min(req.dropset_multiplier, max_mult))
+    elif req.dropset_drops > 0 and exercise.get("allow_dropset", True):
+        dropset_mult = max(1, min(1 + req.dropset_drops, max_mult))
+    else:
+        dropset_mult = 1
+
     muscles_xp_list = exercise.get("muscles_xp")
     if muscles_xp_list and len(muscles_xp_list) > 0:
         muscles_result = []
@@ -293,7 +315,7 @@ async def calculate_xp(req: XPCalculationRequest):
             m_name = m_item.get("muscle")
             m_rate = float(m_item.get("xp", 5.0))
             base = exercise.get("base_xp", 10.0) if idx == 0 else (exercise.get("base_xp", 10.0) * 0.5)
-            xp_val = round((req.weight * m_rate * req.reps) / 10.0 + base, 2)
+            xp_val = round((((req.weight * m_rate * req.reps) / 10.0) + base) * dropset_mult, 2)
             muscles_result.append({"muscle": m_name, "xp": xp_val})
             total_xp += xp_val
 
@@ -305,13 +327,15 @@ async def calculate_xp(req: XPCalculationRequest):
             "primary": primary_info,
             "secondary": secondary_info,
             "all_muscles": muscles_result,
-            "total_xp": round(total_xp, 2)
+            "total_xp": round(total_xp, 2),
+            "dropset_drops": req.dropset_drops,
+            "dropset_multiplier": dropset_mult
         }
 
-    primary_xp = (req.weight * exercise["primary_xp_per_kg"] * req.reps) / 10.0 + exercise.get("base_xp", 10)
+    primary_xp = (((req.weight * exercise["primary_xp_per_kg"] * req.reps) / 10.0) + exercise.get("base_xp", 10)) * dropset_mult
     secondary_xp = 0.0
     if exercise.get("secondary_muscle") and exercise.get("secondary_xp_per_kg"):
-        secondary_xp = (req.weight * exercise["secondary_xp_per_kg"] * req.reps) / 10.0 + (exercise.get("base_xp", 10) * 0.5)
+        secondary_xp = (((req.weight * exercise["secondary_xp_per_kg"] * req.reps) / 10.0) + (exercise.get("base_xp", 10) * 0.5)) * dropset_mult
 
     return {
         "exercise_id": req.exercise_id,
@@ -324,7 +348,9 @@ async def calculate_xp(req: XPCalculationRequest):
             "muscle": exercise.get("secondary_muscle"),
             "xp": round(secondary_xp, 2)
         } if exercise.get("secondary_muscle") else None,
-        "total_xp": round(primary_xp + secondary_xp, 2)
+        "total_xp": round(primary_xp + secondary_xp, 2),
+        "dropset_drops": req.dropset_drops,
+        "dropset_multiplier": dropset_mult
     }
 
 @app.post("/api/player/sync")

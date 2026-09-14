@@ -209,6 +209,13 @@
               </a>
             </div>
             {% endif %}
+
+            <!-- Drop Set Feature Badge -->
+            {% if ex.allow_dropset != False %}
+            <div class="mt-2.5 inline-flex items-center gap-1.5 text-[10px] font-bold text-purple-300 bg-purple-950/50 border border-purple-800/60 px-2.5 py-1 rounded-md">
+              <span>⚡</span> Drop Set Permitido (Hasta x{{ ex.max_dropset_multiplier or 4 }} XP)
+            </div>
+            {% endif %}
           </div>
 
           <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
@@ -269,6 +276,16 @@
               <label class="block text-xs uppercase font-bold text-slate-300 mb-1">Repeticiones</label>
               <input type="number" id="sim-reps" value="10" step="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-cyan-400 font-mono">
             </div>
+          </div>
+
+          <div>
+            <label class="block text-xs uppercase font-bold text-purple-300 mb-1">⚡ Técnica Especial: Saltos de Peso (Drop Set)</label>
+            <select id="sim-dropset" class="w-full bg-slate-950 border border-purple-800 rounded-lg px-4 py-2 text-purple-200 focus:outline-none focus:border-purple-400 font-semibold text-xs">
+              <option value="0">Serie Normal (0 saltos // Multiplicador x1 XP)</option>
+              <option value="1">1 Salto de peso // Multiplicador x2 XP (+100% Boost)</option>
+              <option value="2">2 Saltos de peso // Multiplicador x3 XP (+200% Boost)</option>
+              <option value="3">3+ Saltos de peso // Multiplicador x4 XP (Boost Máximo x4)</option>
+            </select>
           </div>
 
           <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-bold text-black rounded-lg transition orbitron tracking-wider mt-4">
@@ -575,6 +592,37 @@
           <span class="text-[10px] text-slate-400">Pega un enlace a YouTube para visualizar cómo se hace el ejercicio (no un archivo .mp4).</span>
         </div>
 
+        <!-- SECCIÓN: MECÁNICAS ESPECIALES DE XP (DROP SETS) -->
+        <div class="bg-slate-900/90 border border-purple-900/50 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-base">⚡</span>
+              <div>
+                <span class="text-xs uppercase font-bold text-purple-300 block">Mecánica Avanzada: Saltos de Peso (Drop Set)</span>
+                <span class="text-[10px] text-slate-400">Permite activar Drop Sets para multiplicar los puntos de XP de la serie</span>
+              </div>
+            </div>
+            <input type="checkbox" id="ex-allow-dropset" checked class="w-4 h-4 accent-purple-500 cursor-pointer">
+          </div>
+          <div class="p-2.5 bg-slate-950/70 rounded-lg border border-purple-900/30 text-[11px] text-slate-300 space-y-1">
+            <div class="font-bold text-purple-300">Escala de Multiplicación de XP según saltos de peso:</div>
+            <div class="flex flex-wrap gap-2 text-[10px]">
+              <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded">0 saltos: x1 XP</span>
+              <span class="bg-sky-950 text-sky-300 px-2 py-0.5 rounded font-bold">1 salto: x2 XP</span>
+              <span class="bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded font-bold">2 saltos: x3 XP</span>
+              <span class="bg-purple-950 text-purple-300 px-2 py-0.5 rounded font-bold">3+ saltos: x4 XP (Máximo)</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="text-xs text-slate-300 font-semibold">Multiplicador Máximo Permitido:</label>
+            <select id="ex-max-dropset-mult" class="bg-slate-950 border border-purple-800 rounded px-2.5 py-1 text-xs text-purple-300 font-bold font-mono">
+              <option value="2">x2 XP (Máximo 1 Salto)</option>
+              <option value="3">x3 XP (Máximo 2 Saltos)</option>
+              <option value="4" selected>x4 XP (Máximo 3+ Saltos)</option>
+            </select>
+          </div>
+        </div>
+
         <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
           <button type="button" onclick="closeExerciseModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm hover:bg-slate-700">Cancelar</button>
           <button type="submit" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-lg text-sm">Guardar Ejercicio</button>
@@ -745,6 +793,8 @@
       document.getElementById('ex-image-url').value = "";
       document.getElementById('ex-gif-url').value = "";
       document.getElementById('ex-youtube-url').value = "";
+      document.getElementById('ex-allow-dropset').checked = true;
+      document.getElementById('ex-max-dropset-mult').value = "4";
       document.getElementById('exercise-modal').classList.remove('hidden');
     }
 
@@ -782,6 +832,8 @@
       document.getElementById('ex-image-url').value = ex.image_url || "";
       document.getElementById('ex-gif-url').value = ex.gif_url || "";
       document.getElementById('ex-youtube-url').value = ex.youtube_url || "";
+      document.getElementById('ex-allow-dropset').checked = ex.allow_dropset !== false;
+      document.getElementById('ex-max-dropset-mult').value = String(ex.max_dropset_multiplier || 4);
       document.getElementById('exercise-modal').classList.remove('hidden');
     }
 
@@ -809,6 +861,9 @@
         const xp4 = parseFloat(document.getElementById('ex-xp-4').value) || 1.0;
         if (m4) musclesXp.push({muscle: m4, xp: xp4});
 
+        const allowDropset = document.getElementById('ex-allow-dropset').checked;
+        const maxDropsetMult = parseInt(document.getElementById('ex-max-dropset-mult').value) || 4;
+
         const payload = {
           id: document.getElementById('ex-id').value,
           name: document.getElementById('ex-name').value,
@@ -822,7 +877,10 @@
           image_url: document.getElementById('ex-image-url').value,
           gif_url: document.getElementById('ex-gif-url').value,
           youtube_url: document.getElementById('ex-youtube-url').value,
-          muscles_xp: musclesXp
+          muscles_xp: musclesXp,
+          allow_dropset: allowDropset,
+          max_dropset_multiplier: maxDropsetMult,
+          special_mechanics: allowDropset ? ["dropset"] : []
         };
 
         const res = await fetch('/api/exercises', {
@@ -848,15 +906,17 @@
       const exId = document.getElementById('sim-exercise').value;
       const weight = parseFloat(document.getElementById('sim-weight').value);
       const reps = parseInt(document.getElementById('sim-reps').value);
+      const dropsetDrops = parseInt(document.getElementById('sim-dropset')?.value) || 0;
 
       const res = await fetch('/api/calculate_xp', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({exercise_id: exId, weight: weight, reps: reps})
+        body: JSON.stringify({exercise_id: exId, weight: weight, reps: reps, dropset_drops: dropsetDrops})
       });
       const data = await res.json();
       if (res.ok) {
-        document.getElementById('sim-total-xp').innerText = `+${data.total_xp} XP TOTAL`;
+        const multText = data.dropset_multiplier > 1 ? ` (x${data.dropset_multiplier} DROP SET)` : '';
+        document.getElementById('sim-total-xp').innerText = `+${data.total_xp} XP TOTAL${multText}`;
         document.getElementById('sim-prim-name').innerText = `Músculo Primario (${data.primary.muscle.toUpperCase()})`;
         document.getElementById('sim-prim-val').innerText = `+${data.primary.xp} XP`;
         if (data.secondary) {
