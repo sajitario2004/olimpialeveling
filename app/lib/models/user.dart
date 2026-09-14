@@ -8,6 +8,7 @@ class User {
   final String hunterName;
   final String createdAt;
   final String? lastLogin;
+  final String? avatarUrl;
 
   const User({
     required this.id,
@@ -18,6 +19,7 @@ class User {
     required this.hunterName,
     required this.createdAt,
     this.lastLogin,
+    this.avatarUrl,
   });
 
   /// Determina si el usuario tiene privilegios de Administrador.
@@ -47,6 +49,7 @@ class User {
       'hunter_name': hunterName,
       'created_at': createdAt,
       'last_login': lastLogin,
+      'avatar_url': avatarUrl,
     };
   }
 
@@ -60,6 +63,7 @@ class User {
       hunterName: map['hunter_name'] as String? ?? map['username'] as String,
       createdAt: map['created_at'] as String,
       lastLogin: map['last_login'] as String?,
+      avatarUrl: map['avatar_url'] as String?,
     );
   }
 
@@ -72,6 +76,7 @@ class User {
     String? hunterName,
     String? createdAt,
     String? lastLogin,
+    String? avatarUrl,
   }) {
     return User(
       id: id ?? this.id,
@@ -82,6 +87,7 @@ class User {
       hunterName: hunterName ?? this.hunterName,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }

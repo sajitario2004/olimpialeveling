@@ -291,8 +291,34 @@ $$\text{CP} = (\text{TotalLevel} \times 100) + (\text{STR} \times 15) + (\text{A
   - Servicio Flutter `GameConfigService` que lee la configuración embebida al inicio de la app, permitiendo que el APK generado (`flutter build apk`) funcione con esos intervalos exactos sin depender de conexión.
 - **Preparación para GitHub y `.gitignore` Maestro**:
   - Creación de `.gitignore` en la raíz del repositorio filtrando `.DS_Store`, cachés de Python (`__pycache__`, `.pytest_cache`), artefactos de Flutter/Dart (`.dart_tool`, `build`, `.packages`), y compilados nativos de Android, iOS y macOS.
-- **Suite de Pruebas**: **48 de 48 tests pasando en Flutter (100%)** y **9 de 9 tests pasando en Python (100%)**.
-- **Análisis Estático**: `flutter analyze` 100% limpio (0 errores, 0 advertencias).
+### 22. Panel de Ejercicios en Python, 3 Pestañas en Flutter, Perfil (1-100 Azul/Oro), Pirámide y Rutinas Guiadas
+- **Gestión Avanzada de Ejercicios en Servidor Python (`server/`)**:
+  - Modal `#exercise-modal` en la interfaz web de `localhost:8000`.
+  - Campos: Nombre, Descripción, Tips técnicos, Foto (`image_url`), GIF demostrativo (`gif_url`) y Enlace a video de YouTube (`youtube_url`, no .mp4).
+  - Reparto de XP a hasta 4 músculos anatómicos simultáneos (`muscles_xp`) seleccionables de la lista de los 14 músculos oficiales con su XP por kg respectivo.
+  - Validación con 10/10 pruebas en `pytest`.
+- **Estructura de Navegación de 3 Pestañas en Flutter (`HomeScreen`)**:
+  - **Pestaña Izquierda (Índice 0)**: Buscador de ejercicios por nombre en tiempo real, previsualización de multimedia (imagen o GIF), badges con los hasta 4 músculos involucrados, tips de ejecución y botón de acceso a YouTube mediante `url_launcher`.
+  - **Pestaña Central (Índice 1 - Por Defecto)**: Pantalla principal con mapa de calor anatómico de los 2 cuerpos (frontal y dorsal) y misiones del día.
+  - **Pestaña Derecha (Índice 2)**: Perfil de Cazador y Gestor de Rutinas de Entrenamiento.
+- **Perfil de Cazador y Nivel de 1 a 100**:
+  - Foto de avatar configurable (URL o selector de iconos), modificación de nombre de cazador y contraseña cifrada con salt SHA-256.
+  - Nivel de Cazador unificado de 1 a 100 donde el nivel 100 representa **GOD OF OLIMPUS**.
+  - **Regla estricta de color**: mientras el nivel sea menor a 100, tanto el número de nivel como la barra de progreso se renderizan en **azul oscuro (`#0D47A1`)**; al alcanzar el nivel 100, ambos se iluminan en **dorado resplandeciente (`#FFD700`)**.
+  - **Botón de Rango y Modal Piramidal (`RankPyramidDialog`)**: Al pulsarlo se abre un modal en forma de pirámide con la jerarquía de los 8 rangos, citas, colores de liga, realce del rango actual del jugador y un botón `'X'` de cierre en la esquina superior derecha.
+- **Gestor de Rutinas de Entrenamiento (`Routine` y `RoutineExercise`)**:
+  - Almacenamiento persistente en SQLite tabla `routines` (versión 4 de la base de datos).
+  - Tarjeta grande `+ Añadir rutina` si no hay rutinas creadas.
+  - Modal de creación y edición (`RoutineEditorDialog`): selección de ejercicios, número de series, peso objetivo (kg), repeticiones objetivo y tiempo de descanso (s).
+  - Tarjeta de rutina con 3 acciones:
+    1. **Eliminar**: Modal de confirmación con letras rojas chillonas grandes (`#FF1744`) con `"Estas seguro de que quieres borrar esta rutina"`, botón `"SÍ"` en verde (`#00E676`) y botón `"NO"` en rojo (`#FF1744`).
+    2. **Editar**: Botón en ámbar-naranja (`#FFA000`) para editar todos los parámetros de la rutina.
+    3. **Iniciar Rutina**: Sesión interactiva guiada (`RoutineSessionScreen`):
+       - Presentación de la serie actual (ej: "SERIE 1 DE 3", "20 kg x 12 reps").
+       - Botón "TERMINAR SERIE" que permite ajustar peso y repeticiones reales ejecutadas.
+       - Botón `+15s descanso` para ampliar el tiempo de recuperación si es necesario.
+       - Botón `"PASAR A LA SIGUIENTE SERIE"` que distribuye los puntos de XP a los músculos involucrados, reproduce el efecto sonoro del Sistema y activa la cuenta atrás del descanso.
+- **Suite de Pruebas**: **55/55 tests en Flutter** (unitarios y widgets con responsive) y **10/10 tests en Python**, con 0 errores y 0 warnings en `flutter analyze`.
 
 ---
 

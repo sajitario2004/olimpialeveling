@@ -12,6 +12,7 @@ import '../models/daily_quest.dart';
 import '../models/player.dart';
 import '../models/rank.dart';
 import '../models/user.dart';
+import '../models/routine.dart';
 
 class LevelUpEvent {
   final String muscleName;
@@ -54,6 +55,7 @@ class GameProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _workoutLogs = [];
   double _todayVolume = 0.0;
   String? _prAlert;
+  List<Routine> _routines = [];
 
   User? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
@@ -64,6 +66,7 @@ class GameProvider extends ChangeNotifier {
   List<Muscle> get muscles => _muscles;
   List<Exercise> get exercises => _exercises;
   List<DailyQuest> get dailyQuests => _dailyQuests;
+  List<Routine> get routines => _routines;
   bool get isLoading => _isLoading;
   bool get isServerOnline => _isServerOnline;
   String? get penaltyAlert => _penaltyAlert;
@@ -73,6 +76,25 @@ class GameProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get workoutLogs => _workoutLogs;
   double get todayVolume => _todayVolume;
   String? get prAlert => _prAlert;
+
+  /// Nivel del Cazador en la escala de 1 a 100 (suma de los 14 músculos / 14).
+  int get hunterLevel {
+    if (_player == null) return 1;
+    final avg = (_player!.totalLevel / 14).floor();
+    return avg.clamp(1, 100);
+  }
+
+  /// Progreso hacia el siguiente nivel de Cazador (0.0 a 1.0).
+  /// Al alcanzar el nivel 100, devuelve 1.0 (barra completa dorada).
+  double get hunterLevelProgress {
+    if (_player == null) return 0.0;
+    if (hunterLevel >= 100) return 1.0;
+    final fraction = (_player!.totalLevel % 14) / 14.0;
+    return fraction.clamp(0.0, 1.0);
+  }
+
+  /// Rango del jugador en la escala 1..100
+  RankTier get hunterRank => RankTier.getRankForHunterLevel(hunterLevel);
 
   void clearPrAlert() {
     _prAlert = null;
@@ -144,6 +166,9 @@ class GameProvider extends ChangeNotifier {
 
       // Load recent workout logs & today volume
       await refreshWorkoutLogs();
+
+      // Load routines
+      await loadRoutines();
 
       _isLoading = false;
       notifyListeners();
@@ -525,6 +550,7 @@ class GameProvider extends ChangeNotifier {
 
       await _db.saveActiveSession(user.id);
       _currentUser = user;
+      await loadRoutines();
       notifyListeners();
       return null; // Éxito
     } catch (e) {
@@ -566,6 +592,7 @@ class GameProvider extends ChangeNotifier {
       await _db.insertUser(newUser);
       await _db.saveActiveSession(newUser.id);
       _currentUser = newUser;
+      await loadRoutines();
       notifyListeners();
       return null; // Éxito
     } catch (e) {
@@ -577,7 +604,62 @@ class GameProvider extends ChangeNotifier {
   Future<void> logout() async {
     await _db.clearActiveSession();
     _currentUser = null;
+    _routines.clear();
     notifyListeners();
+  }
+
+  // ==================== GESTIÓN DE RUTINAS ====================
+
+  /// Carga todas las rutinas del usuario actual.
+  Future<void> loadRoutines() async {
+    final userId = _currentUser?.id ?? 'main_hunter';
+    _routines = await _db.getRoutines(userId);
+    notifyListeners();
+  }
+
+  /// Guarda o actualiza una rutina personalizada.
+  Future<void> saveRoutine(Routine routine) async {
+    await _db.saveRoutine(routine);
+    await loadRoutines();
+  }
+
+  /// Elimina una rutina por su ID.
+  Future<void> deleteRoutine(String routineId) async {
+    await _db.deleteRoutine(routineId);
+    _routines.removeWhere((r) => r.id == routineId);
+    notifyListeners();
+  }
+
+  // ==================== GESTIÓN DE PERFIL ====================
+
+  /// Actualiza nombre de usuario, nombre de cazador y foto/avatar de perfil.
+  Future<bool> updateProfile({
+    required String username,
+    required String hunterName,
+    String? avatarUrl,
+  }) async {
+    if (_currentUser == null) return false;
+    await _db.updateUserProfile(
+      userId: _currentUser!.id,
+      username: username,
+      hunterName: hunterName,
+      avatarUrl: avatarUrl,
+    );
+    _currentUser = await _db.getUserById(_currentUser!.id);
+    notifyListeners();
+    return true;
+  }
+
+  /// Actualiza la contraseña del usuario con cifrado SHA-256 + Salt.
+  Future<bool> updatePassword({required String newPassword}) async {
+    if (_currentUser == null) return false;
+    await _db.updateUserPassword(
+      userId: _currentUser!.id,
+      newPassword: newPassword,
+    );
+    _currentUser = await _db.getUserById(_currentUser!.id);
+    notifyListeners();
+    return true;
   }
 
   // ==================== GOD MODE / DEVELOPER TERMINAL ====================

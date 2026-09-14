@@ -175,3 +175,29 @@
       - **9/9 tests en Python (100% verde)** con `pytest`.
       - **0 errores y 0 warnings** en `flutter analyze`.
 
+29. **Panel Web de Ejercicios en Python, Navegación de 3 Pestañas, Perfil de Cazador (Nivel 1-100 Azul/Dorado), Pirámide de Rangos y Gestor de Rutinas Guiadas**:
+    - **Panel Web de Control en Python (`server/`)**:
+      - Modal interactivo para crear y editar ejercicios con: Nombre, Descripción, Tips de ejecución, Foto (`image_url`), GIF demostrativo (`gif_url`), y Enlace a video de YouTube (`youtube_url`, no .mp4).
+      - Distribución de XP en hasta 4 músculos anatómicos simultáneos mediante selectores desplegables con sus puntos de XP por kg correspondientes.
+      - 10/10 tests en Python con `pytest` verificando la creación de ejercicios compuestos multimúsculo y multimedia.
+    - **Navegación Inferior en 3 Pestañas (`HomeScreen`)**:
+      - **Pestaña Izquierda (Índice 0)**: Buscador de ejercicios en tiempo real con previsualizaciones multimedia (foto/GIF), tips, desglose de los 4 músculos e hipervínculo directo a YouTube mediante `url_launcher`.
+      - **Pestaña Central (Índice 1 - Por Defecto)**: Pantalla principal con mapa de calor anatómico de los 2 cuerpos (frontal y dorsal).
+      - **Pestaña Derecha (Índice 2)**: Perfil de Cazador con foto/avatar, cambio de nombre y contraseña cifrada, barra de nivel de 1 a 100 y gestor de rutinas.
+    - **Perfil de Cazador y Progresión Visual (Nivel 1 a 100)**:
+      - Escala de Nivel de Cazador unificada de 1 a 100 culminando en **GOD OF OLIMPUS** en el nivel 100.
+      - **Regla estricta de color**: mientras el jugador sube de nivel (< 100), tanto el número de nivel como la barra de progreso se muestran en **azul oscuro (`#0D47A1`)**; al alcanzar el nivel máximo (100), ambos elementos se transforman en **dorado resplandeciente (`#FFD700`)**.
+      - **Botón de Rango y Modal Piramidal**: Despliega la jerarquía de los 8 rangos en forma de pirámide (`RankPyramidDialog`) con citas, colores de liga, realce del rango actual y botón `'X'` de cierre arriba a la derecha.
+    - **Gestor de Rutinas de Entrenamiento (`Routine` y `RoutineExercise`)**:
+      - Tarjeta destacada `+ Añadir rutina` cuando no existen rutinas.
+      - Modal de creación/edición de rutinas (`RoutineEditorDialog`): nombre de rutina, buscador de ejercicios con configuración de series, peso objetivo, repeticiones y tiempo de descanso.
+      - Tarjetas de rutina con 3 acciones:
+        1. **Eliminar**: Diálogo de confirmación con letras rojas chillonas grandes (`#FF1744`) con `"Estas seguro de que quieres borrar esta rutina"`, botón `"SÍ"` en verde (`#00E676`) y botón `"NO"` en rojo (`#FF1744`).
+        2. **Editar**: Botón en color ámbar-naranja (`#FFA000`) para editar la rutina al completo.
+        3. **Iniciar Rutina**: Sesión interactiva guiada (`RoutineSessionScreen`) serie por serie, con visualización de peso/reps objetivo, ajuste de repeticiones y peso reales al finalizar el set, botón `+15s descanso`, botón `"PASAR A LA SIGUIENTE SERIE"` que otorga XP a los músculos, emite sonido y activa la cuenta atrás.
+    - **Batería de Pruebas y Análisis**:
+      - **55/55 tests en Flutter (100% verde)** incluyendo pruebas de modelos, navegación de 3 pestañas, perfil, pirámide y sesiones de entrenamiento.
+      - **10/10 tests en Python (100% verde)** con `pytest`.
+      - **0 errores y 0 advertencias** en `flutter analyze`.
+
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/system_theme.dart';
 import '../../providers/game_provider.dart';
 import '../body_map/widgets/muscle_detail_sheet.dart';
@@ -173,6 +174,25 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Image or GIF Preview if present
+                                if ((ex.gifUrl != null && ex.gifUrl!.isNotEmpty) ||
+                                    (ex.imageUrl != null && ex.imageUrl!.isNotEmpty)) ...[
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      height: 120,
+                                      width: double.infinity,
+                                      color: Colors.black26,
+                                      child: Image.network(
+                                        ex.gifUrl?.isNotEmpty == true ? ex.gifUrl! : ex.imageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
+
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
@@ -194,7 +214,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                                         border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.4)),
                                       ),
                                       child: Text(
-                                        '${ex.primaryXpPerKg} XP/kg',
+                                        'Base: ${ex.baseXp.toInt()} XP',
                                         style: GoogleFonts.orbitron(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
@@ -212,45 +232,112 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                                     color: Colors.white70,
                                   ),
                                 ),
+
+                                if (ex.tips.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.lightbulb_outline, color: Colors.amber, size: 15),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            ex.tips,
+                                            style: GoogleFonts.rajdhani(fontSize: 11.5, color: Colors.amber),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+
                                 const SizedBox(height: 10),
 
-                                // Muscle Badges
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Wrap(
-                                        spacing: 8,
-                                        runSpacing: 6,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: Colors.cyan.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              'Primario: ${ex.primaryMuscle.toUpperCase()}',
-                                              style: GoogleFonts.rajdhani(fontSize: 11, color: SystemTheme.neonCyan, fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                          if (ex.secondaryMuscle != null)
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: Colors.indigo.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                'Secundario: ${ex.secondaryMuscle!.toUpperCase()} (+${ex.secondaryXpPerKg} XP/kg)',
-                                                style: GoogleFonts.rajdhani(fontSize: 11, color: SystemTheme.electricBlue, fontWeight: FontWeight.bold),
-                                              ),
-                                            ),
-                                        ],
+                                // Muscles Involved Badges (Up to 4)
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: ex.musclesXp.map((mEntry) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                                      decoration: BoxDecoration(
+                                        color: SystemTheme.neonCyan.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.3)),
                                       ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.play_arrow, color: SystemTheme.neonCyan, size: 20),
-                                      tooltip: 'Entrenar este ejercicio',
+                                      child: Text(
+                                        '${mEntry.muscle.toUpperCase()} (+${mEntry.xp} XP)',
+                                        style: GoogleFonts.rajdhani(
+                                          fontSize: 11,
+                                          color: SystemTheme.neonCyan,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                // Action Buttons (YouTube Tutorial & Train Now)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    if (ex.youtubeUrl != null && ex.youtubeUrl!.isNotEmpty)
+                                      InkWell(
+                                        onTap: () async {
+                                          final uri = Uri.parse(ex.youtubeUrl!);
+                                          if (await canLaunchUrl(uri)) {
+                                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: Colors.red.withOpacity(0.5)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.play_circle_fill, color: Colors.redAccent, size: 16),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                'Ver en YouTube',
+                                                style: GoogleFonts.rajdhani(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.redAccent,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      const SizedBox.shrink(),
+
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: SystemTheme.neonCyan,
+                                        foregroundColor: Colors.black,
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      icon: const Icon(Icons.play_arrow, size: 16),
+                                      label: Text(
+                                        'Entrenar',
+                                        style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
                                       onPressed: () {
                                         if (primaryMuscle != null) {
                                           showModalBottomSheet(

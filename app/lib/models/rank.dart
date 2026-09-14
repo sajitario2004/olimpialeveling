@@ -82,4 +82,17 @@ class RankTier {
     }
     return allRanks.first;
   }
+
+  /// Devuelve el rango para la escala de Nivel de Cazador de 1 a 100.
+  /// En el nivel 100 se desbloquea GOD OF OLIMPUS.
+  static RankTier getRankForHunterLevel(int hunterLevel) {
+    if (hunterLevel >= 100) return allRanks.last; // GOD OF OLIMPUS
+    if (hunterLevel >= 85) return allRanks[6]; // HERCULES
+    if (hunterLevel >= 70) return allRanks[5]; // SPARTAN
+    if (hunterLevel >= 55) return allRanks[4]; // SOLDIER
+    if (hunterLevel >= 40) return allRanks[3]; // GYMBRO
+    if (hunterLevel >= 25) return allRanks[2]; // NORMAL GYM BUDDY
+    if (hunterLevel >= 10) return allRanks[1]; // HUMAN
+    return allRanks.first; // SKINNYBITCH
+  }
 }

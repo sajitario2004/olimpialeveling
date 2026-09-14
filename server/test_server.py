@@ -132,4 +132,41 @@ def test_export_to_apk():
     assert data["status"] == "success"
     assert "exported_path" in data
 
+def test_create_exercise_with_4_muscles_and_media():
+    payload = {
+        "id": "press_banca_test_4m",
+        "name": "Press de Banca Dioses",
+        "description": "Fuerza máxima de empuje",
+        "tips": "Retracción escapular firme y pies clavados al suelo",
+        "base_xp": 25.0,
+        "image_url": "https://example.com/bench.jpg",
+        "gif_url": "https://example.com/bench.gif",
+        "youtube_url": "https://www.youtube.com/watch?v=rT7DgCr-3pg",
+        "muscles_xp": [
+            {"muscle": "pecho", "xp": 5.0},
+            {"muscle": "triceps", "xp": 3.0},
+            {"muscle": "deltoides", "xp": 2.0},
+            {"muscle": "antebrazo", "xp": 1.0}
+        ]
+    }
+    res = client.post("/api/exercises", json=payload)
+    assert res.status_code == 200
+    ex = res.json()["exercise"]
+    assert ex["primary_muscle"] == "pecho"
+    assert ex["secondary_muscle"] == "triceps"
+    assert len(ex["muscles_xp"]) == 4
+    assert ex["tips"] == "Retracción escapular firme y pies clavados al suelo"
+    assert ex["youtube_url"] == "https://www.youtube.com/watch?v=rT7DgCr-3pg"
+
+    # Test calculate_xp with 4 muscles
+    calc_res = client.post("/api/calculate_xp", json={"exercise_id": "press_banca_test_4m", "weight": 100.0, "reps": 10})
+    assert calc_res.status_code == 200
+    calc_data = calc_res.json()
+    assert "all_muscles" in calc_data
+    assert len(calc_data["all_muscles"]) == 4
+
+    # Clean up
+    del_res = client.delete("/api/exercises/press_banca_test_4m")
+    assert del_res.status_code == 200
+
 

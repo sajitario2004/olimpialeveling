@@ -7,6 +7,7 @@ import '../../models/exercise.dart';
 import '../../models/player.dart';
 import '../../models/daily_quest.dart';
 import '../../models/user.dart';
+import '../../models/routine.dart';
 import '../security/password_hasher.dart';
 
 class DatabaseHelper {
@@ -32,7 +33,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgradeDB,
     );
@@ -108,6 +109,23 @@ class DatabaseHelper {
       await _createAuthTables(db);
       await _seedDefaultAdmin(db);
     }
+    if (oldVersion < 4) {
+      await _addColumnIfNotExists(db, 'users', 'avatar_url', 'TEXT');
+      await _addColumnIfNotExists(db, 'exercises', 'tips', 'TEXT');
+      await _addColumnIfNotExists(db, 'exercises', 'image_url', 'TEXT');
+      await _addColumnIfNotExists(db, 'exercises', 'gif_url', 'TEXT');
+      await _addColumnIfNotExists(db, 'exercises', 'youtube_url', 'TEXT');
+      await _addColumnIfNotExists(db, 'exercises', 'muscles_xp_json', 'TEXT');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS routines (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          exercises_json TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      ''');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -148,11 +166,26 @@ class DatabaseHelper {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT,
+        tips TEXT,
         primary_muscle TEXT NOT NULL,
         primary_xp_per_kg REAL NOT NULL,
         secondary_muscle TEXT,
         secondary_xp_per_kg REAL,
-        base_xp REAL NOT NULL
+        base_xp REAL NOT NULL,
+        image_url TEXT,
+        gif_url TEXT,
+        youtube_url TEXT,
+        muscles_xp_json TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE routines (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        exercises_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
       )
     ''');
 
@@ -526,5 +559,76 @@ class DatabaseHelper {
   Future<void> clearActiveSession() async {
     final db = await database;
     await db.delete('auth_sessions');
+  }
+
+  /// Obtiene las rutinas guardadas de un usuario.
+  Future<List<Routine>> getRoutines(String userId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'routines',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'created_at DESC',
+    );
+    return maps.map((m) => Routine.fromMap(m)).toList();
+  }
+
+  /// Guarda una nueva rutina o reemplaza una existente.
+  Future<void> saveRoutine(Routine routine) async {
+    final db = await database;
+    await db.insert(
+      'routines',
+      routine.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Elimina una rutina por su ID.
+  Future<void> deleteRoutine(String routineId) async {
+    final db = await database;
+    await db.delete(
+      'routines',
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+  }
+
+  /// Actualiza los datos de perfil de usuario (nombre de usuario, nombre de cazador y avatar).
+  Future<void> updateUserProfile({
+    required String userId,
+    required String username,
+    required String hunterName,
+    String? avatarUrl,
+  }) async {
+    final db = await database;
+    await db.update(
+      'users',
+      {
+        'username': username,
+        'hunter_name': hunterName,
+        if (avatarUrl != null) ...{'avatar_url': avatarUrl},
+      },
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  /// Actualiza la contraseña del usuario cifrándola con un nuevo salt criptográfico.
+  Future<void> updateUserPassword({
+    required String userId,
+    required String newPassword,
+  }) async {
+    final db = await database;
+    final salt = PasswordHasher.generateSalt(16);
+    final hash = PasswordHasher.hashPassword(newPassword, salt);
+    await db.update(
+      'users',
+      {
+        'password_hash': hash,
+        'salt': salt,
+      },
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
   }
 }

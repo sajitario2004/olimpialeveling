@@ -141,56 +141,79 @@
       <div class="flex justify-between items-center bg-slate-900/60 p-4 rounded-xl border border-slate-800">
         <div>
           <h2 class="text-xl font-bold orbitron text-cyan-300">Catálogo de Ejercicios y Reparto de XP</h2>
-          <p class="text-sm text-slate-400">Configura la experiencia asignada a los 14 músculos específicos según el peso y las repeticiones.</p>
+          <p class="text-sm text-slate-400">Configura nombre, descripción, tips, reparto de hasta 4 músculos con sus XP, foto, GIF y enlace a YouTube.</p>
         </div>
         <button onclick="openNewExerciseModal()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold rounded-lg text-sm shadow-lg shadow-cyan-500/20 transition flex items-center gap-2">
           <span>+</span> Añadir Ejercicio
         </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="exercises-grid">
         {% for ex in exercises %}
         <div class="neon-border bg-slate-900/70 rounded-xl p-5 flex flex-col justify-between">
           <div>
-            <div class="flex justify-between items-start">
+            <div class="flex justify-between items-start gap-2">
               <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
                 Base XP: {{ ex.base_xp }}
               </span>
-              <button onclick="deleteExercise('{{ ex.id }}')" class="text-red-400 hover:text-red-300 text-sm">✕</button>
+              <button onclick="deleteExercise('{{ ex.id }}')" class="text-red-400 hover:text-red-300 text-sm font-bold">✕</button>
             </div>
-            <h3 class="text-lg font-bold text-white mt-2">{{ ex.name }}</h3>
+
+            <!-- Media Preview (Image or GIF) -->
+            {% if ex.gif_url or ex.image_url %}
+            <div class="mt-3 rounded-lg overflow-hidden border border-slate-800 max-h-36 flex items-center justify-center bg-black/50">
+              <img src="{{ ex.gif_url or ex.image_url }}" alt="{{ ex.name }}" class="object-cover w-full h-36" onerror="this.style.display='none'">
+            </div>
+            {% endif %}
+
+            <h3 class="text-lg font-bold text-white mt-3">{{ ex.name }}</h3>
             <p class="text-xs text-slate-400 mt-1 line-clamp-2">{{ ex.description }}</p>
 
-            <div class="mt-4 space-y-2">
-              <div class="bg-cyan-950/30 border border-cyan-900/50 p-2.5 rounded-lg flex justify-between items-center text-xs">
-                <div>
-                  <span class="text-slate-400 block">Músculo Principal:</span>
-                  <span class="font-bold text-cyan-300 uppercase">{{ ex.primary_muscle }}</span>
-                </div>
-                <div class="text-right">
-                  <span class="text-slate-400 block">Multiplicador:</span>
-                  <span class="font-mono text-cyan-400 font-bold text-sm">{{ ex.primary_xp_per_kg }} XP / kg</span>
-                </div>
-              </div>
+            {% if ex.tips %}
+            <div class="mt-2 bg-slate-950/80 border border-amber-500/30 p-2 rounded text-[11px] text-amber-300 flex items-start gap-1.5">
+              <span>💡</span>
+              <span class="italic line-clamp-2">{{ ex.tips }}</span>
+            </div>
+            {% endif %}
 
-              {% if ex.secondary_muscle %}
-              <div class="bg-slate-950/40 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center text-xs">
-                <div>
-                  <span class="text-slate-400 block">Músculo Secundario:</span>
-                  <span class="font-bold text-slate-300 uppercase">{{ ex.secondary_muscle }}</span>
+            <!-- Muscles & XP breakdown (up to 4) -->
+            <div class="mt-3 space-y-1.5">
+              <span class="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Músculos Involucrados & XP:</span>
+              {% if ex.muscles_xp and ex.muscles_xp|length > 0 %}
+                {% for m in ex.muscles_xp %}
+                <div class="bg-cyan-950/40 border border-cyan-900/60 px-2.5 py-1.5 rounded flex justify-between items-center text-xs">
+                  <span class="text-cyan-300 font-bold uppercase">{{ m.muscle }}</span>
+                  <span class="font-mono text-cyan-400 font-bold">+{{ m.xp }} XP</span>
                 </div>
-                <div class="text-right">
-                  <span class="text-slate-400 block">Multiplicador:</span>
-                  <span class="font-mono text-sky-400 font-bold text-sm">{{ ex.secondary_xp_per_kg }} XP / kg</span>
+                {% endfor %}
+              {% else %}
+                <div class="bg-cyan-950/30 border border-cyan-900/50 px-2.5 py-1.5 rounded flex justify-between items-center text-xs">
+                  <span class="text-cyan-300 font-bold uppercase">{{ ex.primary_muscle }}</span>
+                  <span class="font-mono text-cyan-400 font-bold">{{ ex.primary_xp_per_kg }} XP/kg</span>
                 </div>
-              </div>
+                {% if ex.secondary_muscle %}
+                <div class="bg-slate-950/40 border border-slate-800 px-2.5 py-1.5 rounded flex justify-between items-center text-xs">
+                  <span class="text-slate-300 font-bold uppercase">{{ ex.secondary_muscle }}</span>
+                  <span class="font-mono text-sky-400 font-bold">{{ ex.secondary_xp_per_kg }} XP/kg</span>
+                </div>
+                {% endif %}
               {% endif %}
             </div>
+
+            <!-- YouTube Video Link -->
+            {% if ex.youtube_url %}
+            <div class="mt-3">
+              <a href="{{ ex.youtube_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 bg-red-950/30 border border-red-900/50 px-2.5 py-1 rounded transition">
+                <span>▶️</span>
+                <span class="font-semibold">Ver técnica en YouTube</span>
+              </a>
+            </div>
+            {% endif %}
           </div>
 
-          <div class="mt-5 pt-4 border-t border-slate-800 flex justify-end">
-            <button onclick="editExercise({{ ex | tojson }})" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold">
-              Modificar Multiplicadores →
+          <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+            <button onclick='editExercise({{ ex | tojson }})' class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1">
+              <span>✏️</span> Editar Ejercicio →
             </button>
           </div>
         </div>
@@ -378,6 +401,188 @@
     </div>
   </div>
 
+  <!-- MODAL: EDIT / CREATE EXERCISE (UP TO 4 MUSCLES, PHOTO, GIF, YOUTUBE) -->
+  <div id="exercise-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="neon-border bg-slate-950 rounded-2xl max-w-2xl w-full p-6 space-y-4 my-8 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-xl font-bold orbitron text-cyan-300" id="modal-exercise-title">Configurar Ejercicio</h3>
+        <button onclick="closeExerciseModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <form id="exercise-form" onsubmit="saveExercise(event)" class="space-y-4">
+        <input type="hidden" id="ex-id">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs uppercase font-bold text-slate-300 block mb-1">Nombre del Ejercicio *</label>
+            <input type="text" id="ex-name" required placeholder="Ej: Press de Banca Plano" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none">
+          </div>
+          <div>
+            <label class="text-xs uppercase font-bold text-indigo-300 block mb-1">XP Base por serie</label>
+            <input type="number" id="ex-base-xp" step="1" value="20" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs uppercase font-bold text-slate-300 block mb-1">Descripción del Ejercicio *</label>
+          <textarea id="ex-description" rows="2" required placeholder="Breve descripción del movimiento y enfoque..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="text-xs uppercase font-bold text-amber-300 block mb-1">💡 Consejos Técnicos / Tips</label>
+          <textarea id="ex-tips" rows="2" placeholder="Ej: Retracción escapular activa, no bloquear codos al final..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none"></textarea>
+        </div>
+
+        <!-- SECCIÓN: HASTA 4 MÚSCULOS CON SELECTOR DESPLEGABLE Y XP -->
+        <div class="border border-cyan-500/30 bg-cyan-950/20 p-4 rounded-xl space-y-3">
+          <div class="flex justify-between items-center">
+            <label class="text-xs uppercase font-bold text-cyan-300 tracking-wider">🎯 Músculos Involucrados y Puntos de XP (Hasta 4)</label>
+            <span class="text-[10px] text-slate-400">Selecciona del menú desplegable</span>
+          </div>
+
+          <!-- Músculo 1 (Obligatorio) -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="md:col-span-1 text-xs font-bold text-cyan-400">#1</div>
+            <div class="md:col-span-7">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Músculo Principal *</label>
+              <select id="ex-muscle-1" required class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white uppercase font-semibold">
+                <option value="">-- Seleccionar Músculo --</option>
+                <option value="pecho">Pecho (Pectoral)</option>
+                <option value="triceps">Tríceps</option>
+                <option value="biceps">Bíceps</option>
+                <option value="antebrazo">Antebrazo</option>
+                <option value="dorsales">Dorsales (Espalda)</option>
+                <option value="trapecio">Trapecio</option>
+                <option value="lumbar">Lumbar (Espalda baja)</option>
+                <option value="deltoides">Deltoides (Hombros)</option>
+                <option value="cuadriceps">Cuádriceps</option>
+                <option value="isquiotibiales">Isquiotibiales (Femoral)</option>
+                <option value="gluteos">Glúteos</option>
+                <option value="gemelos">Gemelos (Pantorrilla)</option>
+                <option value="abdominales">Abdominales (Core)</option>
+                <option value="oblicuos">Oblicuos</option>
+              </select>
+            </div>
+            <div class="md:col-span-4">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Puntos de XP / kg *</label>
+              <input type="number" id="ex-xp-1" step="0.5" value="5.0" required class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-cyan-300 font-mono font-bold">
+            </div>
+          </div>
+
+          <!-- Músculo 2 (Opcional) -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="md:col-span-1 text-xs font-bold text-sky-400">#2</div>
+            <div class="md:col-span-7">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Músculo Secundario</label>
+              <select id="ex-muscle-2" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white uppercase font-semibold">
+                <option value="">-- Ninguno (Opcional) --</option>
+                <option value="pecho">Pecho (Pectoral)</option>
+                <option value="triceps">Tríceps</option>
+                <option value="biceps">Bíceps</option>
+                <option value="antebrazo">Antebrazo</option>
+                <option value="dorsales">Dorsales (Espalda)</option>
+                <option value="trapecio">Trapecio</option>
+                <option value="lumbar">Lumbar (Espalda baja)</option>
+                <option value="deltoides">Deltoides (Hombros)</option>
+                <option value="cuadriceps">Cuádriceps</option>
+                <option value="isquiotibiales">Isquiotibiales (Femoral)</option>
+                <option value="gluteos">Glúteos</option>
+                <option value="gemelos">Gemelos (Pantorrilla)</option>
+                <option value="abdominales">Abdominales (Core)</option>
+                <option value="oblicuos">Oblicuos</option>
+              </select>
+            </div>
+            <div class="md:col-span-4">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Puntos de XP / kg</label>
+              <input type="number" id="ex-xp-2" step="0.5" value="2.5" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-sky-300 font-mono font-bold">
+            </div>
+          </div>
+
+          <!-- Músculo 3 (Opcional) -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="md:col-span-1 text-xs font-bold text-emerald-400">#3</div>
+            <div class="md:col-span-7">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Músculo Terciario</label>
+              <select id="ex-muscle-3" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white uppercase font-semibold">
+                <option value="">-- Ninguno (Opcional) --</option>
+                <option value="pecho">Pecho (Pectoral)</option>
+                <option value="triceps">Tríceps</option>
+                <option value="biceps">Bíceps</option>
+                <option value="antebrazo">Antebrazo</option>
+                <option value="dorsales">Dorsales (Espalda)</option>
+                <option value="trapecio">Trapecio</option>
+                <option value="lumbar">Lumbar (Espalda baja)</option>
+                <option value="deltoides">Deltoides (Hombros)</option>
+                <option value="cuadriceps">Cuádriceps</option>
+                <option value="isquiotibiales">Isquiotibiales (Femoral)</option>
+                <option value="gluteos">Glúteos</option>
+                <option value="gemelos">Gemelos (Pantorrilla)</option>
+                <option value="abdominales">Abdominales (Core)</option>
+                <option value="oblicuos">Oblicuos</option>
+              </select>
+            </div>
+            <div class="md:col-span-4">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Puntos de XP / kg</label>
+              <input type="number" id="ex-xp-3" step="0.5" value="1.5" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-emerald-300 font-mono font-bold">
+            </div>
+          </div>
+
+          <!-- Músculo 4 (Opcional) -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="md:col-span-1 text-xs font-bold text-amber-400">#4</div>
+            <div class="md:col-span-7">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Cuarto Músculo</label>
+              <select id="ex-muscle-4" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white uppercase font-semibold">
+                <option value="">-- Ninguno (Opcional) --</option>
+                <option value="pecho">Pecho (Pectoral)</option>
+                <option value="triceps">Tríceps</option>
+                <option value="biceps">Bíceps</option>
+                <option value="antebrazo">Antebrazo</option>
+                <option value="dorsales">Dorsales (Espalda)</option>
+                <option value="trapecio">Trapecio</option>
+                <option value="lumbar">Lumbar (Espalda baja)</option>
+                <option value="deltoides">Deltoides (Hombros)</option>
+                <option value="cuadriceps">Cuádriceps</option>
+                <option value="isquiotibiales">Isquiotibiales (Femoral)</option>
+                <option value="gluteos">Glúteos</option>
+                <option value="gemelos">Gemelos (Pantorrilla)</option>
+                <option value="abdominales">Abdominales (Core)</option>
+                <option value="oblicuos">Oblicuos</option>
+              </select>
+            </div>
+            <div class="md:col-span-4">
+              <label class="text-[10px] uppercase text-slate-400 block mb-0.5">Puntos de XP / kg</label>
+              <input type="number" id="ex-xp-4" step="0.5" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-amber-300 font-mono font-bold">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN: FOTO, GIF Y ENLACE DE YOUTUBE -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs uppercase font-bold text-slate-300 block mb-1">📸 Foto del Ejercicio (URL)</label>
+            <input type="text" id="ex-image-url" placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+          </div>
+          <div>
+            <label class="text-xs uppercase font-bold text-slate-300 block mb-1">🎞️ GIF del Ejercicio (URL)</label>
+            <input type="text" id="ex-gif-url" placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs uppercase font-bold text-red-400 block mb-1">▶️ Enlace a YouTube (Técnica en video)</label>
+          <input type="url" id="ex-youtube-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full bg-slate-900 border border-red-900/60 rounded-lg px-3 py-2 text-xs text-red-300 focus:border-red-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400">Pega un enlace a YouTube para visualizar cómo se hace el ejercicio (no un archivo .mp4).</span>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closeExerciseModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm hover:bg-slate-700">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-lg text-sm">Guardar Ejercicio</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     function switchTab(tabName) {
       ['intervals', 'exercises', 'ranks', 'simulator', 'settings'].forEach(t => {
@@ -520,6 +725,122 @@
       if (!confirm('¿Seguro que deseas eliminar este ejercicio?')) return;
       const res = await fetch('/api/exercises/' + id, {method: 'DELETE'});
       if (res.ok) window.location.reload();
+    }
+
+    function openNewExerciseModal() {
+      document.getElementById('modal-exercise-title').innerText = "Nuevo Ejercicio";
+      document.getElementById('ex-id').value = "ex_" + Date.now();
+      document.getElementById('ex-name').value = "";
+      document.getElementById('ex-description').value = "";
+      document.getElementById('ex-tips').value = "";
+      document.getElementById('ex-base-xp').value = "20";
+      document.getElementById('ex-muscle-1').value = "pecho";
+      document.getElementById('ex-xp-1').value = "5.0";
+      document.getElementById('ex-muscle-2').value = "";
+      document.getElementById('ex-xp-2').value = "2.5";
+      document.getElementById('ex-muscle-3').value = "";
+      document.getElementById('ex-xp-3').value = "1.5";
+      document.getElementById('ex-muscle-4').value = "";
+      document.getElementById('ex-xp-4').value = "1.0";
+      document.getElementById('ex-image-url').value = "";
+      document.getElementById('ex-gif-url').value = "";
+      document.getElementById('ex-youtube-url').value = "";
+      document.getElementById('exercise-modal').classList.remove('hidden');
+    }
+
+    function editExercise(ex) {
+      document.getElementById('modal-exercise-title').innerText = "Editar: " + ex.name;
+      document.getElementById('ex-id').value = ex.id;
+      document.getElementById('ex-name').value = ex.name || "";
+      document.getElementById('ex-description').value = ex.description || "";
+      document.getElementById('ex-tips').value = ex.tips || "";
+      document.getElementById('ex-base-xp').value = ex.base_xp || 20;
+
+      if (ex.muscles_xp && ex.muscles_xp.length > 0) {
+        document.getElementById('ex-muscle-1').value = ex.muscles_xp[0]?.muscle || "";
+        document.getElementById('ex-xp-1').value = ex.muscles_xp[0]?.xp || "5.0";
+
+        document.getElementById('ex-muscle-2').value = ex.muscles_xp[1]?.muscle || "";
+        document.getElementById('ex-xp-2').value = ex.muscles_xp[1]?.xp || "2.5";
+
+        document.getElementById('ex-muscle-3').value = ex.muscles_xp[2]?.muscle || "";
+        document.getElementById('ex-xp-3').value = ex.muscles_xp[2]?.xp || "1.5";
+
+        document.getElementById('ex-muscle-4').value = ex.muscles_xp[3]?.muscle || "";
+        document.getElementById('ex-xp-4').value = ex.muscles_xp[3]?.xp || "1.0";
+      } else {
+        document.getElementById('ex-muscle-1').value = ex.primary_muscle || "pecho";
+        document.getElementById('ex-xp-1').value = ex.primary_xp_per_kg || "5.0";
+        document.getElementById('ex-muscle-2').value = ex.secondary_muscle || "";
+        document.getElementById('ex-xp-2').value = ex.secondary_xp_per_kg || "2.0";
+        document.getElementById('ex-muscle-3').value = "";
+        document.getElementById('ex-xp-3').value = "1.5";
+        document.getElementById('ex-muscle-4').value = "";
+        document.getElementById('ex-xp-4').value = "1.0";
+      }
+
+      document.getElementById('ex-image-url').value = ex.image_url || "";
+      document.getElementById('ex-gif-url').value = ex.gif_url || "";
+      document.getElementById('ex-youtube-url').value = ex.youtube_url || "";
+      document.getElementById('exercise-modal').classList.remove('hidden');
+    }
+
+    function closeExerciseModal() {
+      document.getElementById('exercise-modal').classList.add('hidden');
+    }
+
+    async function saveExercise(e) {
+      e.preventDefault();
+      try {
+        const musclesXp = [];
+        const m1 = document.getElementById('ex-muscle-1').value;
+        const xp1 = parseFloat(document.getElementById('ex-xp-1').value) || 5.0;
+        if (m1) musclesXp.push({muscle: m1, xp: xp1});
+
+        const m2 = document.getElementById('ex-muscle-2').value;
+        const xp2 = parseFloat(document.getElementById('ex-xp-2').value) || 2.5;
+        if (m2) musclesXp.push({muscle: m2, xp: xp2});
+
+        const m3 = document.getElementById('ex-muscle-3').value;
+        const xp3 = parseFloat(document.getElementById('ex-xp-3').value) || 1.5;
+        if (m3) musclesXp.push({muscle: m3, xp: xp3});
+
+        const m4 = document.getElementById('ex-muscle-4').value;
+        const xp4 = parseFloat(document.getElementById('ex-xp-4').value) || 1.0;
+        if (m4) musclesXp.push({muscle: m4, xp: xp4});
+
+        const payload = {
+          id: document.getElementById('ex-id').value,
+          name: document.getElementById('ex-name').value,
+          description: document.getElementById('ex-description').value,
+          tips: document.getElementById('ex-tips').value,
+          base_xp: parseFloat(document.getElementById('ex-base-xp').value) || 20.0,
+          primary_muscle: musclesXp[0]?.muscle || "pecho",
+          primary_xp_per_kg: musclesXp[0]?.xp || 5.0,
+          secondary_muscle: musclesXp[1]?.muscle || null,
+          secondary_xp_per_kg: musclesXp[1]?.xp || 0.0,
+          image_url: document.getElementById('ex-image-url').value,
+          gif_url: document.getElementById('ex-gif-url').value,
+          youtube_url: document.getElementById('ex-youtube-url').value,
+          muscles_xp: musclesXp
+        };
+
+        const res = await fetch('/api/exercises', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          alert('¡Ejercicio guardado exitosamente!');
+          window.location.reload();
+        } else {
+          const errData = await res.json();
+          alert('Error al guardar ejercicio: ' + (errData.detail || 'Error desconocido'));
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
     }
 
     async function runSimulation(e) {

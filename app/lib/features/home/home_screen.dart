@@ -10,11 +10,12 @@ import '../quests/daily_quest_sheet.dart';
 import '../stats/hunter_stats_sheet.dart';
 import '../level_up/level_up_dialog.dart';
 import '../exercises/exercise_library_screen.dart';
-import '../achievements/achievements_screen.dart';
 import '../settings/settings_screen.dart';
 import '../dungeons/rank_dungeon_sheet.dart';
 import '../history/workout_history_sheet.dart';
 import '../developer/developer_terminal_dialog.dart';
+
+import '../profile/hunter_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,7 +25,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentTabIndex = 0;
+  int _currentTabIndex = 1; // Pestaña del medio (Principal) por defecto
 
   @override
   Widget build(BuildContext context) {
@@ -238,6 +239,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                   ],
                 ),
+
+                // Settings button
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined, color: Colors.white70),
+                  tooltip: 'Ajustes del Sistema',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                ),
                 const SizedBox(width: 8),
               ],
             ),
@@ -245,10 +257,9 @@ class _HomeScreenState extends State<HomeScreen> {
           body: IndexedStack(
             index: _currentTabIndex,
             children: [
-              _buildMainBodyTab(context, game),
               const ExerciseLibraryScreen(),
-              const AchievementsScreen(),
-              const SettingsScreen(),
+              _buildMainBodyTab(context, game),
+              const HunterProfileScreen(),
             ],
           ),
           bottomNavigationBar: Container(
@@ -269,20 +280,19 @@ class _HomeScreenState extends State<HomeScreen> {
               unselectedLabelStyle: GoogleFonts.rajdhani(fontSize: 11, fontWeight: FontWeight.w600),
               items: const [
                 BottomNavigationBarItem(
+                  icon: Icon(Icons.search),
+                  activeIcon: Icon(Icons.search, color: SystemTheme.neonCyan),
+                  label: 'Ejercicios',
+                ),
+                BottomNavigationBarItem(
                   icon: Icon(Icons.accessibility_new),
+                  activeIcon: Icon(Icons.accessibility_new, color: SystemTheme.neonCyan),
                   label: 'Cuerpo',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.fitness_center),
-                  label: 'Biblioteca',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.emoji_events),
-                  label: 'Títulos',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings),
-                  label: 'Ajustes',
+                  icon: Icon(Icons.person),
+                  activeIcon: Icon(Icons.person, color: SystemTheme.neonCyan),
+                  label: 'Perfil',
                 ),
               ],
             ),

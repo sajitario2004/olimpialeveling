@@ -5,6 +5,7 @@ import 'package:olimpia_leveling/models/rank.dart';
 import 'package:olimpia_leveling/models/daily_quest.dart';
 import 'package:olimpia_leveling/models/player.dart';
 import 'package:olimpia_leveling/models/achievement.dart';
+import 'package:olimpia_leveling/models/routine.dart';
 import 'package:olimpia_leveling/core/calculator/one_rm_calculator.dart';
 
 void main() {
@@ -301,6 +302,109 @@ void main() {
       final copied = muscle.copyWith(level: 15);
       expect(copied.level, 15);
       expect(copied.rankIndex, 2); // NORMAL GYM BUDDY
+    });
+
+    test('RankTier.getRankForHunterLevel escala de nivel 1 a 100 con God of Olimpus en 100', () {
+      expect(RankTier.getRankForHunterLevel(1).name, 'SKINNYBITCH');
+      expect(RankTier.getRankForHunterLevel(9).name, 'SKINNYBITCH');
+      expect(RankTier.getRankForHunterLevel(10).name, 'HUMAN');
+      expect(RankTier.getRankForHunterLevel(24).name, 'HUMAN');
+      expect(RankTier.getRankForHunterLevel(25).name, 'NORMAL GYM BUDDY');
+      expect(RankTier.getRankForHunterLevel(39).name, 'NORMAL GYM BUDDY');
+      expect(RankTier.getRankForHunterLevel(40).name, 'GYMBRO');
+      expect(RankTier.getRankForHunterLevel(54).name, 'GYMBRO');
+      expect(RankTier.getRankForHunterLevel(55).name, 'SOLDIER');
+      expect(RankTier.getRankForHunterLevel(69).name, 'SOLDIER');
+      expect(RankTier.getRankForHunterLevel(70).name, 'SPARTAN');
+      expect(RankTier.getRankForHunterLevel(84).name, 'SPARTAN');
+      expect(RankTier.getRankForHunterLevel(85).name, 'HERCULES');
+      expect(RankTier.getRankForHunterLevel(99).name, 'HERCULES');
+      expect(RankTier.getRankForHunterLevel(100).name, 'GOD OF OLIMPUS');
+    });
+
+    test('Ejercicio con hasta 4 músculos distribuye XP correctamente a todos ellos', () {
+      final multiExercise = Exercise(
+        id: 'clean_and_press',
+        name: 'Clean and Press',
+        description: 'Movimiento compuesto olímpico completo',
+        primaryMuscle: 'deltoides',
+        primaryXpPerKg: 4.0,
+        tips: 'Mantén la espalda recta y el core activado.',
+        imageUrl: 'https://images.unsplash.com/photo-example.jpg',
+        gifUrl: 'https://media.giphy.com/media/example/giphy.gif',
+        youtubeUrl: 'https://www.youtube.com/watch?v=example',
+        musclesXp: [
+          MuscleXpEntry(muscle: 'deltoides', xp: 4.0),
+          MuscleXpEntry(muscle: 'trapecio', xp: 3.0),
+          MuscleXpEntry(muscle: 'cuadriceps', xp: 3.5),
+          MuscleXpEntry(muscle: 'lumbares', xp: 2.5),
+        ],
+        baseXp: 30.0,
+      );
+
+      final xp = multiExercise.calculateXp(weightKg: 50.0, reps: 10);
+      expect(xp.length, 4);
+      // deltoides (primario): (50 * 4.0 * 10) / 10 + 30 = 200 + 30 = 230
+      expect(xp['deltoides'], 230.0);
+      // trapecio (secundario, base/2 = 15): (50 * 3.0 * 10) / 10 + 15 = 150 + 15 = 165
+      expect(xp['trapecio'], 165.0);
+      // cuadriceps (secundario, base/2 = 15): (50 * 3.5 * 10) / 10 + 15 = 175 + 15 = 190
+      expect(xp['cuadriceps'], 190.0);
+      // lumbares (secundario, base/2 = 15): (50 * 2.5 * 10) / 10 + 15 = 125 + 15 = 140
+      expect(xp['lumbares'], 140.0);
+
+      // Verificación de toMap y fromMap
+      final map = multiExercise.toMap();
+      expect(map['tips'], 'Mantén la espalda recta y el core activado.');
+      expect(map['youtube_url'], 'https://www.youtube.com/watch?v=example');
+
+      final restored = Exercise.fromMap(map);
+      expect(restored.musclesXp.length, 4);
+      expect(restored.tips, multiExercise.tips);
+      expect(restored.youtubeUrl, multiExercise.youtubeUrl);
+    });
+
+    test('Modelo Routine y RoutineExercise serialización y manipulación', () {
+      final routine = Routine(
+        id: 'dia_pecho_biceps',
+        userId: 'admin_1',
+        name: 'Día de Pecho y Bíceps',
+        createdAt: '2026-09-14T20:00:00Z',
+        exercises: [
+          RoutineExercise(
+            exerciseId: 'press_banca',
+            exerciseName: 'Press de Banca',
+            primaryMuscle: 'pecho',
+            sets: 4,
+            targetReps: 10,
+            targetWeightKg: 80.0,
+            restSeconds: 90,
+          ),
+          RoutineExercise(
+            exerciseId: 'curl_biceps',
+            exerciseName: 'Curl de Bíceps',
+            primaryMuscle: 'biceps',
+            sets: 3,
+            targetReps: 12,
+            targetWeightKg: 15.0,
+            restSeconds: 60,
+          ),
+        ],
+      );
+
+      expect(routine.exercises.length, 2);
+      expect(routine.exercises.first.exerciseName, 'Press de Banca');
+      expect(routine.exercises.first.restSeconds, 90);
+
+      final map = routine.toMap();
+      final restored = Routine.fromMap(map);
+
+      expect(restored.id, 'dia_pecho_biceps');
+      expect(restored.userId, 'admin_1');
+      expect(restored.name, 'Día de Pecho y Bíceps');
+      expect(restored.exercises.length, 2);
+      expect(restored.exercises[1].primaryMuscle, 'biceps');
+      expect(restored.exercises[1].targetWeightKg, 15.0);
     });
   });
 }

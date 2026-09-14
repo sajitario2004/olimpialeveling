@@ -45,6 +45,7 @@ dependencies:
   intl: ^0.20.3
   flutter_animate: ^4.5.2
   crypto: ^3.0.6
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

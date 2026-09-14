@@ -93,15 +93,24 @@ class LevelInterval(BaseModel):
     penalty_level: int = 1
     penalty_message: str = "¡Misión diaria fallida! Has perdido 1 nivel."
 
+class MuscleXpItem(BaseModel):
+    muscle: str
+    xp: float
+
 class ExerciseItem(BaseModel):
     id: str
     name: str
     description: str
-    primary_muscle: str
-    primary_xp_per_kg: float
+    primary_muscle: str = "pecho"
+    primary_xp_per_kg: float = 5.0
     secondary_muscle: Optional[str] = None
     secondary_xp_per_kg: Optional[float] = 0.0
     base_xp: float = 20.0
+    tips: Optional[str] = ""
+    image_url: Optional[str] = ""
+    gif_url: Optional[str] = ""
+    youtube_url: Optional[str] = ""
+    muscles_xp: Optional[List[Dict[str, Any]]] = None
 
 class RankItem(BaseModel):
     id: str
@@ -187,16 +196,28 @@ async def get_exercises():
 async def create_or_update_exercise(exercise: ExerciseItem):
     config = load_config()
     exercises = config.get("exercises", [])
-    
+    data = exercise.model_dump()
+
+    # Synchronize primary/secondary if muscles_xp is passed
+    if exercise.muscles_xp and len(exercise.muscles_xp) > 0:
+        data["primary_muscle"] = exercise.muscles_xp[0]["muscle"]
+        data["primary_xp_per_kg"] = float(exercise.muscles_xp[0].get("xp", 5.0))
+        if len(exercise.muscles_xp) > 1:
+            data["secondary_muscle"] = exercise.muscles_xp[1]["muscle"]
+            data["secondary_xp_per_kg"] = float(exercise.muscles_xp[1].get("xp", 2.0))
+        else:
+            data["secondary_muscle"] = None
+            data["secondary_xp_per_kg"] = 0.0
+
     existing_idx = next((i for i, item in enumerate(exercises) if item["id"] == exercise.id), None)
     if existing_idx is not None:
-        exercises[existing_idx] = exercise.model_dump()
+        exercises[existing_idx] = data
     else:
-        exercises.append(exercise.model_dump())
+        exercises.append(data)
         
     config["exercises"] = exercises
     save_config(config)
-    return {"status": "success", "message": f"Ejercicio '{exercise.name}' guardado.", "exercise": exercise}
+    return {"status": "success", "message": f"Ejercicio '{exercise.name}' guardado.", "exercise": data}
 
 @app.delete("/api/exercises/{exercise_id}")
 async def delete_exercise(exercise_id: str):
@@ -263,7 +284,30 @@ async def calculate_xp(req: XPCalculationRequest):
     exercise = next((e for e in config.get("exercises", []) if e["id"] == req.exercise_id), None)
     if not exercise:
         raise HTTPException(status_code=404, detail="Ejercicio no encontrado")
-        
+
+    muscles_xp_list = exercise.get("muscles_xp")
+    if muscles_xp_list and len(muscles_xp_list) > 0:
+        muscles_result = []
+        total_xp = 0.0
+        for idx, m_item in enumerate(muscles_xp_list):
+            m_name = m_item.get("muscle")
+            m_rate = float(m_item.get("xp", 5.0))
+            base = exercise.get("base_xp", 10.0) if idx == 0 else (exercise.get("base_xp", 10.0) * 0.5)
+            xp_val = round((req.weight * m_rate * req.reps) / 10.0 + base, 2)
+            muscles_result.append({"muscle": m_name, "xp": xp_val})
+            total_xp += xp_val
+
+        primary_info = muscles_result[0]
+        secondary_info = muscles_result[1] if len(muscles_result) > 1 else None
+        return {
+            "exercise_id": req.exercise_id,
+            "name": exercise["name"],
+            "primary": primary_info,
+            "secondary": secondary_info,
+            "all_muscles": muscles_result,
+            "total_xp": round(total_xp, 2)
+        }
+
     primary_xp = (req.weight * exercise["primary_xp_per_kg"] * req.reps) / 10.0 + exercise.get("base_xp", 10)
     secondary_xp = 0.0
     if exercise.get("secondary_muscle") and exercise.get("secondary_xp_per_kg"):

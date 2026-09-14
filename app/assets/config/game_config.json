@@ -299,7 +299,21 @@
       "primary_xp_per_kg": 5.0,
       "secondary_muscle": "pecho",
       "secondary_xp_per_kg": 2.0,
-      "base_xp": 20
+      "base_xp": 20,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Press+Inclinado+con+Barra+o+Mancuernas",
+      "muscles_xp": [
+        {
+          "muscle": "deltoides",
+          "xp": 5.0
+        },
+        {
+          "muscle": "pecho",
+          "xp": 2.0
+        }
+      ]
     },
     {
       "id": "press_banca_plano",
@@ -309,7 +323,21 @@
       "primary_xp_per_kg": 5.0,
       "secondary_muscle": "triceps",
       "secondary_xp_per_kg": 2.0,
-      "base_xp": 25
+      "base_xp": 25,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Press+de+Banca+Plano",
+      "muscles_xp": [
+        {
+          "muscle": "pecho",
+          "xp": 5.0
+        },
+        {
+          "muscle": "triceps",
+          "xp": 2.0
+        }
+      ]
     },
     {
       "id": "dominadas",
@@ -319,7 +347,21 @@
       "primary_xp_per_kg": 4.0,
       "secondary_muscle": "biceps",
       "secondary_xp_per_kg": 2.5,
-      "base_xp": 30
+      "base_xp": 30,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Dominadas+Pronas+/+Neutras",
+      "muscles_xp": [
+        {
+          "muscle": "dorsales",
+          "xp": 4.0
+        },
+        {
+          "muscle": "biceps",
+          "xp": 2.5
+        }
+      ]
     },
     {
       "id": "sentadilla",
@@ -329,7 +371,21 @@
       "primary_xp_per_kg": 5.0,
       "secondary_muscle": "gluteos",
       "secondary_xp_per_kg": 3.0,
-      "base_xp": 30
+      "base_xp": 30,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Sentadilla+Trasera+con+Barra",
+      "muscles_xp": [
+        {
+          "muscle": "cuadriceps",
+          "xp": 5.0
+        },
+        {
+          "muscle": "gluteos",
+          "xp": 3.0
+        }
+      ]
     },
     {
       "id": "peso_muerto",
@@ -339,7 +395,21 @@
       "primary_xp_per_kg": 4.0,
       "secondary_muscle": "isquiotibiales",
       "secondary_xp_per_kg": 3.0,
-      "base_xp": 35
+      "base_xp": 35,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Peso+Muerto+Convencional",
+      "muscles_xp": [
+        {
+          "muscle": "lumbar",
+          "xp": 4.0
+        },
+        {
+          "muscle": "isquiotibiales",
+          "xp": 3.0
+        }
+      ]
     },
     {
       "id": "curl_biceps",
@@ -349,7 +419,21 @@
       "primary_xp_per_kg": 6.0,
       "secondary_muscle": "antebrazo",
       "secondary_xp_per_kg": 2.5,
-      "base_xp": 15
+      "base_xp": 15,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Curl+de+Bíceps+con+Barra+Z+/+Mancuernas",
+      "muscles_xp": [
+        {
+          "muscle": "biceps",
+          "xp": 6.0
+        },
+        {
+          "muscle": "antebrazo",
+          "xp": 2.5
+        }
+      ]
     },
     {
       "id": "fondos_paralelas",
@@ -359,7 +443,21 @@
       "primary_xp_per_kg": 4.5,
       "secondary_muscle": "pecho",
       "secondary_xp_per_kg": 2.5,
-      "base_xp": 25
+      "base_xp": 25,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Fondos+en+Paralelas+(Dips)",
+      "muscles_xp": [
+        {
+          "muscle": "triceps",
+          "xp": 4.5
+        },
+        {
+          "muscle": "pecho",
+          "xp": 2.5
+        }
+      ]
     },
     {
       "id": "elevaciones_laterales",
@@ -369,7 +467,21 @@
       "primary_xp_per_kg": 7.0,
       "secondary_muscle": "trapecio",
       "secondary_xp_per_kg": 1.5,
-      "base_xp": 15
+      "base_xp": 15,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Elevaciones+Laterales+con+Mancuernas",
+      "muscles_xp": [
+        {
+          "muscle": "deltoides",
+          "xp": 7.0
+        },
+        {
+          "muscle": "trapecio",
+          "xp": 1.5
+        }
+      ]
     },
     {
       "id": "remo_con_barra",
@@ -379,7 +491,21 @@
       "primary_xp_per_kg": 4.5,
       "secondary_muscle": "trapecio",
       "secondary_xp_per_kg": 2.5,
-      "base_xp": 25
+      "base_xp": 25,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Remo+con+Barra+45°",
+      "muscles_xp": [
+        {
+          "muscle": "dorsales",
+          "xp": 4.5
+        },
+        {
+          "muscle": "trapecio",
+          "xp": 2.5
+        }
+      ]
     },
     {
       "id": "prensa_piernas",
@@ -389,7 +515,21 @@
       "primary_xp_per_kg": 3.5,
       "secondary_muscle": "gluteos",
       "secondary_xp_per_kg": 2.0,
-      "base_xp": 20
+      "base_xp": 20,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Prensa+Inclinada+45°",
+      "muscles_xp": [
+        {
+          "muscle": "cuadriceps",
+          "xp": 3.5
+        },
+        {
+          "muscle": "gluteos",
+          "xp": 2.0
+        }
+      ]
     },
     {
       "id": "curl_femoral",
@@ -399,7 +539,21 @@
       "primary_xp_per_kg": 5.0,
       "secondary_muscle": "gemelos",
       "secondary_xp_per_kg": 1.5,
-      "base_xp": 15
+      "base_xp": 15,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Curl+Femoral+Tumbado+/+Sentado",
+      "muscles_xp": [
+        {
+          "muscle": "isquiotibiales",
+          "xp": 5.0
+        },
+        {
+          "muscle": "gemelos",
+          "xp": 1.5
+        }
+      ]
     },
     {
       "id": "elevacion_talones",
@@ -409,7 +563,21 @@
       "primary_xp_per_kg": 4.0,
       "secondary_muscle": "antebrazo",
       "secondary_xp_per_kg": 0.5,
-      "base_xp": 15
+      "base_xp": 15,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Elevación+de+Talones+de+Pie",
+      "muscles_xp": [
+        {
+          "muscle": "gemelos",
+          "xp": 4.0
+        },
+        {
+          "muscle": "antebrazo",
+          "xp": 0.5
+        }
+      ]
     },
     {
       "id": "crunch_polea_rueda",
@@ -419,7 +587,21 @@
       "primary_xp_per_kg": 4.0,
       "secondary_muscle": "oblicuos",
       "secondary_xp_per_kg": 2.0,
-      "base_xp": 15
+      "base_xp": 15,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Crunch+en+Polea+/+Rueda+Abdominal",
+      "muscles_xp": [
+        {
+          "muscle": "abdominales",
+          "xp": 4.0
+        },
+        {
+          "muscle": "oblicuos",
+          "xp": 2.0
+        }
+      ]
     },
     {
       "id": "giros_rusos_oblicuos",
@@ -429,7 +611,21 @@
       "primary_xp_per_kg": 4.5,
       "secondary_muscle": "abdominales",
       "secondary_xp_per_kg": 2.0,
-      "base_xp": 15
+      "base_xp": 15,
+      "tips": "Ejecuta con control en la fase excéntrica y mantén tensión constante en el músculo objetivo.",
+      "image_url": "",
+      "gif_url": "",
+      "youtube_url": "https://www.youtube.com/results?search_query=Giros+Rusos+con+Peso+/+Leñador",
+      "muscles_xp": [
+        {
+          "muscle": "oblicuos",
+          "xp": 4.5
+        },
+        {
+          "muscle": "abdominales",
+          "xp": 2.0
+        }
+      ]
     }
   ],
   "settings": {

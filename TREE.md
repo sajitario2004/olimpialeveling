@@ -100,10 +100,11 @@ olimpialeveling/
 │   │   │   ├── muscle.dart          # Los 14 músculos con curva de XP recursiva del 15% y mapa de calor
 │   │   │   ├── player.dart          # Cazador: nivel total, rango, títulos, racha (+5%/+10% XP) y atributos
 │   │   │   ├── rank.dart            # Los 8 rangos: de skinnybitch a god of olimpus con umbrales y colores
+│   │   │   ├── routine.dart         # Modelo de rutinas y ejercicios configurados (sets, reps, peso, descanso)
 │   │   │   └── user.dart            # Usuario y Cazador autenticado con roles admin y developer
 │   │   │
 │   │   ├── providers/               # Gestores de estado reactivo
-│   │   │   └── game_provider.dart   # Orquestador del juego: auth, God Mode, anti-cheat, penalizaciones
+│   │   │   └── game_provider.dart   # Orquestador del juego: auth, God Mode, anti-cheat, penalizaciones, rutinas
 │   │   │
 │   │   └── features/                # Vistas y pantallas divididas por funcionalidad
 │   │       ├── splash/
@@ -113,11 +114,18 @@ olimpialeveling/
 │   │       ├── developer/
 │   │       │   └── developer_terminal_dialog.dart# Terminal del desarrollador / God Mode HUD para pruebas QA
 │   │       ├── home/
-│   │       │   └── home_screen.dart              # Pantalla principal con barra de navegación y acceso dev
+│   │       │   └── home_screen.dart              # Pantalla con barra de navegación de 3 pestañas (Ejercicios, Cuerpo, Perfil)
 │   │       ├── body_map/
 │   │       │   └── widgets/
 │   │       │       ├── anatomical_body_view.dart # Siluetas frontal (izq) y dorsal (der) con mapa de calor
 │   │       │       └── muscle_detail_sheet.dart  # Modal holográfico de registro de series y selector de discos
+│   │       ├── profile/
+│   │       │   ├── hunter_profile_screen.dart    # Perfil de cazador, nivel 1-100 (azul/oro), avatar y gestor de rutinas
+│   │       │   └── widgets/
+│   │       │       └── rank_pyramid_dialog.dart  # Jerarquía de 8 rangos en forma de pirámide con botón X de cierre
+│   │       ├── routines/
+│   │       │   ├── routine_editor_dialog.dart    # Modal de creación y edición completa de rutinas
+│   │       │   └── routine_session_screen.dart   # Sesión de entrenamiento guiada interactiva con descanso y +15s
 │   │       ├── quests/
 │   │       │   └── daily_quest_sheet.dart        # Ventana de las 4 pruebas del Olimpo y uso de tokens de descanso
 │   │       ├── stats/

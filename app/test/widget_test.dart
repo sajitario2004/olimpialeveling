@@ -19,6 +19,10 @@ import 'package:olimpia_leveling/features/settings/settings_screen.dart';
 import 'package:olimpia_leveling/features/body_map/widgets/muscle_detail_sheet.dart';
 import 'package:olimpia_leveling/features/splash/system_boot_screen.dart';
 import 'package:olimpia_leveling/features/home/home_screen.dart';
+import 'package:olimpia_leveling/features/profile/hunter_profile_screen.dart';
+import 'package:olimpia_leveling/features/profile/widgets/rank_pyramid_dialog.dart';
+import 'package:olimpia_leveling/features/routines/routine_session_screen.dart';
+import 'package:olimpia_leveling/models/routine.dart';
 import 'package:olimpia_leveling/models/exercise.dart';
 import 'package:olimpia_leveling/providers/game_provider.dart';
 
@@ -699,5 +703,151 @@ void main() {
     expect(find.text('CAZADOR DEL OLIMPO'), findsOneWidget);
     expect(find.text('PODER DE COMBATE (CP)'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Barra de navegación con 3 pestañas: Ejercicios, Cuerpo (default) y Perfil', (WidgetTester tester) async {
+    final testGame = GameProvider();
+    testGame.loadTestData(
+      player: Player(totalLevel: 30, streakDays: 5, lastActiveDate: '2026-09-14'),
+      muscles: [
+        Muscle(id: 'pecho', name: 'Pecho', category: 'front', level: 2),
+        Muscle(id: 'deltoides', name: 'Deltoides', category: 'both', level: 3),
+      ],
+      exercises: [
+        Exercise(
+          id: 'press_banca',
+          name: 'Press de Banca',
+          description: 'Pectoral mayor',
+          primaryMuscle: 'pecho',
+          primaryXpPerKg: 5.0,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<GameProvider>.value(
+        value: testGame,
+        child: const MaterialApp(
+          home: HomeScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 3 pestañas en la barra de navegación
+    expect(find.text('Ejercicios'), findsOneWidget);
+    expect(find.text('Cuerpo'), findsOneWidget);
+    expect(find.text('Perfil'), findsOneWidget);
+
+    // Inicia en la pestaña de en medio (Cuerpo / Mapa Muscular)
+    expect(find.text('MAPA MUSCULAR DEL SISTEMA'), findsOneWidget);
+
+    // Cambiar a la pestaña de la izquierda: Ejercicios
+    await tester.tap(find.text('Ejercicios'));
+    await tester.pumpAndSettle();
+    expect(find.text('BIBLIOTECA DE EJERCICIOS'), findsOneWidget);
+
+    // Cambiar a la pestaña de la derecha: Perfil
+    await tester.tap(find.text('Perfil'));
+    await tester.pumpAndSettle();
+    expect(find.text('NIVEL DEL JUGADOR: '), findsOneWidget);
+    expect(find.text('RUTINAS DE ENTRENAMIENTO'), findsOneWidget);
+  });
+
+  testWidgets('RankPyramidDialog muestra la jerarquía piramidal de 8 rangos y botón X de cierre', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: RankPyramidDialog(
+            playerLevel: 55,
+            currentRankId: 'soldier',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('PIRÁMIDE DEL OLIMPO'), findsOneWidget);
+    expect(find.text('GOD OF OLIMPUS'), findsOneWidget);
+    expect(find.text('SKINNYBITCH'), findsOneWidget);
+    expect(find.text('HERCULES'), findsOneWidget);
+    expect(find.text('SPARTAN'), findsOneWidget);
+    expect(find.text('SOLDIER'), findsOneWidget);
+    expect(find.text('GYMBRO'), findsOneWidget);
+    expect(find.text('NORMAL GYM BUDDY'), findsOneWidget);
+    expect(find.text('HUMAN'), findsOneWidget);
+
+    // Botón X de cerrar
+    expect(find.byIcon(Icons.close), findsOneWidget);
+  });
+
+  testWidgets('HunterProfileScreen muestra nivel de cazador, rangos, y gestor de rutinas', (WidgetTester tester) async {
+    final testGame = GameProvider();
+    testGame.loadTestData(
+      player: Player(totalLevel: 42, streakDays: 10, lastActiveDate: '2026-09-14'),
+      muscles: [
+        Muscle(id: 'pecho', name: 'Pecho', category: 'front', level: 3),
+      ],
+      exercises: [],
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<GameProvider>.value(
+        value: testGame,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: HunterProfileScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('NIVEL DEL JUGADOR: '), findsOneWidget);
+    expect(find.text('RUTINAS DE ENTRENAMIENTO'), findsOneWidget);
+    expect(find.text('+ Añadir rutina'), findsOneWidget);
+    expect(find.text('Toca para ver la Pirámide del Olimpo'), findsOneWidget);
+  });
+
+  testWidgets('RoutineSessionScreen guía de entrenamiento interactiva con selector de peso y reps', (WidgetTester tester) async {
+    final testGame = GameProvider();
+    final routine = Routine(
+      id: 'rutina_test',
+      userId: 'admin_1',
+      name: 'Rutina Test',
+      createdAt: '2026-09-14',
+      exercises: [
+        RoutineExercise(
+          exerciseId: 'press_banca',
+          exerciseName: 'Press de Banca',
+          primaryMuscle: 'pecho',
+          sets: 2,
+          targetWeightKg: 50.0,
+          targetReps: 10,
+          restSeconds: 60,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<GameProvider>.value(
+        value: testGame,
+        child: MaterialApp(
+          home: RoutineSessionScreen(routine: routine),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Press de Banca'), findsOneWidget);
+    expect(find.text('SERIE 1 DE 2'), findsOneWidget);
+    expect(find.text('TERMINAR SERIE'), findsOneWidget);
+
+    // Tocar TERMINAR SERIE para pasar a revisión y descanso
+    await tester.tap(find.text('TERMINAR SERIE'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PASAR A LA SIGUIENTE SERIE'), findsOneWidget);
+    expect(find.text('+15s descanso'), findsOneWidget);
   });
 }
