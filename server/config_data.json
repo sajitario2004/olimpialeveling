@@ -1,0 +1,444 @@
+{
+  "muscles": [
+    {
+      "id": "pecho",
+      "name": "Pecho",
+      "category": "front",
+      "description": "Pectoral mayor y menor"
+    },
+    {
+      "id": "triceps",
+      "name": "Tríceps",
+      "category": "back",
+      "description": "Cabeza lateral, medial y larga del tríceps"
+    },
+    {
+      "id": "biceps",
+      "name": "Bíceps",
+      "category": "front",
+      "description": "Cabeza corta y larga del bíceps braquial"
+    },
+    {
+      "id": "antebrazo",
+      "name": "Antebrazo",
+      "category": "front",
+      "description": "Flexores y extensores de la muñeca"
+    },
+    {
+      "id": "dorsales",
+      "name": "Dorsales",
+      "category": "back",
+      "description": "Dorsal ancho y redondo mayor"
+    },
+    {
+      "id": "trapecio",
+      "name": "Trapecio",
+      "category": "back",
+      "description": "Trapecio superior, medio e inferior"
+    },
+    {
+      "id": "lumbar",
+      "name": "Lumbar",
+      "category": "back",
+      "description": "Erectores espinales y zona baja"
+    },
+    {
+      "id": "deltoides",
+      "name": "Deltoides",
+      "category": "both",
+      "description": "Deltoides anterior, lateral y posterior"
+    },
+    {
+      "id": "cuadriceps",
+      "name": "Cuádriceps",
+      "category": "front",
+      "description": "Vasto externo, interno, recto femoral"
+    },
+    {
+      "id": "isquiotibiales",
+      "name": "Isquiotibiales",
+      "category": "back",
+      "description": "Bíceps femoral, semitendinoso y semimembranoso"
+    },
+    {
+      "id": "gluteos",
+      "name": "Glúteos",
+      "category": "back",
+      "description": "Glúteo mayor, medio y menor"
+    },
+    {
+      "id": "gemelos",
+      "name": "Gemelos",
+      "category": "both",
+      "description": "Gastrocnemio y sóleo"
+    },
+    {
+      "id": "abdominales",
+      "name": "Abdominales",
+      "category": "front",
+      "description": "Recto abdominal"
+    },
+    {
+      "id": "oblicuos",
+      "name": "Oblicuos",
+      "category": "front",
+      "description": "Oblicuos internos y externos"
+    }
+  ],
+  "ranks": [
+    {
+      "id": "skinnybitch",
+      "name": "Skinny Bitch",
+      "min_level": 14,
+      "color": "#64748b",
+      "quote": "El inicio de todo despertar. Débil pero con potencial divino."
+    },
+    {
+      "id": "human",
+      "name": "Human",
+      "min_level": 25,
+      "color": "#3b82f6",
+      "quote": "Has superado la fragilidad común. El hierro empieza a obedecerte."
+    },
+    {
+      "id": "normal_gym_buddy",
+      "name": "Normal Gym Buddy",
+      "min_level": 55,
+      "color": "#06b6d4",
+      "quote": "Tu presencia en el gimnasio ya es constante. Eres un compañero digno."
+    },
+    {
+      "id": "gymbro",
+      "name": "Gymbro",
+      "min_level": 95,
+      "color": "#10b981",
+      "quote": "El sudor y la disciplina corren por tus venas. Respetado por tus pares."
+    },
+    {
+      "id": "soldier",
+      "name": "Soldier",
+      "min_level": 150,
+      "color": "#eab308",
+      "quote": "Disciplina militar espartana. El dolor es solo debilidad abandonando el cuerpo."
+    },
+    {
+      "id": "spartan",
+      "name": "Spartan",
+      "min_level": 220,
+      "color": "#f97316",
+      "quote": "¡Esto es Esparta! Ningún peso ni fatiga quebranta tu voluntad."
+    },
+    {
+      "id": "hercules",
+      "name": "Hercules",
+      "min_level": 300,
+      "color": "#ef4444",
+      "quote": "Fuerza mitológica sobrehumana. Capaz de realizar los 12 trabajos."
+    },
+    {
+      "id": "god_of_olimpus",
+      "name": "God of Olimpus",
+      "min_level": 400,
+      "color": "#a855f7",
+      "quote": "Ascensión celestial completada. Te sientas en el trono del Olimpo."
+    }
+  ],
+  "level_intervals": [
+    {
+      "id": "interval_1_4",
+      "min_level": 1,
+      "max_level": 4,
+      "title": "Despertar del Cazador",
+      "quests": [
+        {
+          "name": "Flexiones",
+          "target": 10,
+          "unit": "reps"
+        },
+        {
+          "name": "Caminata o trote",
+          "target": 2.0,
+          "unit": "km"
+        }
+      ],
+      "penalty_level": 1,
+      "penalty_message": "¡Misión diaria fallida! Has perdido 1 nivel del Sistema."
+    },
+    {
+      "id": "interval_5_20",
+      "min_level": 5,
+      "max_level": 20,
+      "title": "Iniciación de Guerrero (20 flexiones y 5km)",
+      "quests": [
+        {
+          "name": "Flexiones",
+          "target": 20,
+          "unit": "reps"
+        },
+        {
+          "name": "Recorrido a pie o corriendo",
+          "target": 5.0,
+          "unit": "km"
+        }
+      ],
+      "penalty_level": 1,
+      "penalty_message": "¡Misión diaria fallida! Has perdido 1 nivel del Sistema."
+    },
+    {
+      "id": "test_interval_5_20",
+      "min_level": 5,
+      "max_level": 20,
+      "title": "Prueba diaria 5-20",
+      "quests": [
+        {
+          "name": "Flexiones",
+          "target": 20.0,
+          "unit": "reps"
+        },
+        {
+          "name": "Kilómetros",
+          "target": 5.0,
+          "unit": "km"
+        }
+      ],
+      "penalty_level": 1,
+      "penalty_message": "Penalización aplicada: -1 nivel"
+    },
+    {
+      "id": "interval_21_50",
+      "min_level": 21,
+      "max_level": 50,
+      "title": "Entrenamiento de Combate Diario",
+      "quests": [
+        {
+          "name": "Flexiones estrictas",
+          "target": 40,
+          "unit": "reps"
+        },
+        {
+          "name": "Sentadillas libres",
+          "target": 50,
+          "unit": "reps"
+        },
+        {
+          "name": "Carrera continua",
+          "target": 6.0,
+          "unit": "km"
+        }
+      ],
+      "penalty_level": 1,
+      "penalty_message": "¡Misión diaria fallida! Has perdido 1 nivel del Sistema."
+    },
+    {
+      "id": "interval_51_90",
+      "min_level": 51,
+      "max_level": 90,
+      "title": "Régimen del Soldado Espartano",
+      "quests": [
+        {
+          "name": "Flexiones",
+          "target": 75,
+          "unit": "reps"
+        },
+        {
+          "name": "Dominadas",
+          "target": 25,
+          "unit": "reps"
+        },
+        {
+          "name": "Sentadillas profundas",
+          "target": 100,
+          "unit": "reps"
+        },
+        {
+          "name": "Carrera de resistencia",
+          "target": 8.0,
+          "unit": "km"
+        }
+      ],
+      "penalty_level": 1,
+      "penalty_message": "¡Misión diaria fallida! Has perdido 1 nivel del Sistema."
+    },
+    {
+      "id": "interval_91_plus",
+      "min_level": 91,
+      "max_level": 9999,
+      "title": "Prueba de los Dioses del Olimpo",
+      "quests": [
+        {
+          "name": "Flexiones explosivas",
+          "target": 100,
+          "unit": "reps"
+        },
+        {
+          "name": "Dominadas estrictas",
+          "target": 40,
+          "unit": "reps"
+        },
+        {
+          "name": "Sentadillas olímpicas",
+          "target": 120,
+          "unit": "reps"
+        },
+        {
+          "name": "Carrera a muerte",
+          "target": 10.0,
+          "unit": "km"
+        }
+      ],
+      "penalty_level": 1,
+      "penalty_message": "¡Misión diaria fallida! Has perdido 1 nivel del Sistema."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "press_inclinado",
+      "name": "Press Inclinado con Barra o Mancuernas",
+      "description": "Enfocado en deltoides anterior y porción superior del pectoral",
+      "primary_muscle": "deltoides",
+      "primary_xp_per_kg": 5.0,
+      "secondary_muscle": "pecho",
+      "secondary_xp_per_kg": 2.0,
+      "base_xp": 20
+    },
+    {
+      "id": "press_banca_plano",
+      "name": "Press de Banca Plano",
+      "description": "Constructor fundamental de masa en pecho y tríceps",
+      "primary_muscle": "pecho",
+      "primary_xp_per_kg": 5.0,
+      "secondary_muscle": "triceps",
+      "secondary_xp_per_kg": 2.0,
+      "base_xp": 25
+    },
+    {
+      "id": "dominadas",
+      "name": "Dominadas Pronas / Neutras",
+      "description": "Tracción vertical fundamental para dorsales y bíceps",
+      "primary_muscle": "dorsales",
+      "primary_xp_per_kg": 4.0,
+      "secondary_muscle": "biceps",
+      "secondary_xp_per_kg": 2.5,
+      "base_xp": 30
+    },
+    {
+      "id": "sentadilla",
+      "name": "Sentadilla Trasera con Barra",
+      "description": "Constructor masivo de cuádriceps y glúteos",
+      "primary_muscle": "cuadriceps",
+      "primary_xp_per_kg": 5.0,
+      "secondary_muscle": "gluteos",
+      "secondary_xp_per_kg": 3.0,
+      "base_xp": 30
+    },
+    {
+      "id": "peso_muerto",
+      "name": "Peso Muerto Convencional",
+      "description": "Cadena posterior completa: lumbares, isquios y trapecios",
+      "primary_muscle": "lumbar",
+      "primary_xp_per_kg": 4.0,
+      "secondary_muscle": "isquiotibiales",
+      "secondary_xp_per_kg": 3.0,
+      "base_xp": 35
+    },
+    {
+      "id": "curl_biceps",
+      "name": "Curl de Bíceps con Barra Z / Mancuernas",
+      "description": "Aislamiento de brazos y antebrazos",
+      "primary_muscle": "biceps",
+      "primary_xp_per_kg": 6.0,
+      "secondary_muscle": "antebrazo",
+      "secondary_xp_per_kg": 2.5,
+      "base_xp": 15
+    },
+    {
+      "id": "fondos_paralelas",
+      "name": "Fondos en Paralelas (Dips)",
+      "description": "Potencia de empuje para tríceps y pectoral inferior",
+      "primary_muscle": "triceps",
+      "primary_xp_per_kg": 4.5,
+      "secondary_muscle": "pecho",
+      "secondary_xp_per_kg": 2.5,
+      "base_xp": 25
+    },
+    {
+      "id": "elevaciones_laterales",
+      "name": "Elevaciones Laterales con Mancuernas",
+      "description": "Aislamiento del deltoides lateral para hombros de piedra",
+      "primary_muscle": "deltoides",
+      "primary_xp_per_kg": 7.0,
+      "secondary_muscle": "trapecio",
+      "secondary_xp_per_kg": 1.5,
+      "base_xp": 15
+    },
+    {
+      "id": "remo_con_barra",
+      "name": "Remo con Barra 45°",
+      "description": "Densidad de espalda y grosor de trapecio",
+      "primary_muscle": "dorsales",
+      "primary_xp_per_kg": 4.5,
+      "secondary_muscle": "trapecio",
+      "secondary_xp_per_kg": 2.5,
+      "base_xp": 25
+    },
+    {
+      "id": "prensa_piernas",
+      "name": "Prensa Inclinada 45°",
+      "description": "Sobrecarga progresiva para piernas y glúteos",
+      "primary_muscle": "cuadriceps",
+      "primary_xp_per_kg": 3.5,
+      "secondary_muscle": "gluteos",
+      "secondary_xp_per_kg": 2.0,
+      "base_xp": 20
+    },
+    {
+      "id": "curl_femoral",
+      "name": "Curl Femoral Tumbado / Sentado",
+      "description": "Aislamiento de la parte posterior del muslo",
+      "primary_muscle": "isquiotibiales",
+      "primary_xp_per_kg": 5.0,
+      "secondary_muscle": "gemelos",
+      "secondary_xp_per_kg": 1.5,
+      "base_xp": 15
+    },
+    {
+      "id": "elevacion_talones",
+      "name": "Elevación de Talones de Pie",
+      "description": "Fuerza y volumen en pantorrillas",
+      "primary_muscle": "gemelos",
+      "primary_xp_per_kg": 4.0,
+      "secondary_muscle": "antebrazo",
+      "secondary_xp_per_kg": 0.5,
+      "base_xp": 15
+    },
+    {
+      "id": "crunch_polea_rueda",
+      "name": "Crunch en Polea / Rueda Abdominal",
+      "description": "Fortalecimiento del core frontal",
+      "primary_muscle": "abdominales",
+      "primary_xp_per_kg": 4.0,
+      "secondary_muscle": "oblicuos",
+      "secondary_xp_per_kg": 2.0,
+      "base_xp": 15
+    },
+    {
+      "id": "giros_rusos_oblicuos",
+      "name": "Giros Rusos con Peso / Leñador",
+      "description": "Corte y definición de los laterales del abdomen",
+      "primary_muscle": "oblicuos",
+      "primary_xp_per_kg": 4.5,
+      "secondary_muscle": "abdominales",
+      "secondary_xp_per_kg": 2.0,
+      "base_xp": 15
+    }
+  ],
+  "settings": {
+    "default_rest_time_seconds": 90,
+    "xp_curve_base": 1000.0,
+    "xp_curve_multiplier": 1.15,
+    "xp_base_per_level": 100,
+    "stat_points_per_level": 3,
+    "penalty_enabled": true,
+    "penalty_level_drop": 1
+  }
+}
