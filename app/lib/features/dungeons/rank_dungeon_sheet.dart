@@ -114,8 +114,8 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
                             alignment: Alignment.centerLeft,
                             child: Text(
                               isSupremeTrial
-                                  ? '[SISTEMA // PRUEBA SUPREMA DE ASCENSIÓN]'
-                                  : '[SISTEMA // MAZMORRA SEMANAL]',
+                                  ? '[ORÁCULO DEL OLIMPO // PRUEBA SUPREMA]'
+                                  : '[ORÁCULO DEL OLIMPO // PRUEBA SEMANAL]',
                               style: GoogleFonts.orbitron(
                                 fontSize: 10,
                                 letterSpacing: 1.5,
@@ -380,22 +380,22 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
                       border: Border.all(color: SystemTheme.spartanGold),
                     ),
                     child: Text(
-                      '¡Cuerpos compensados y simétricos! Elige una de las 3 mazmorras semanales para demostrar tu valía y ascender a ${nextRank.name}.',
+                      '¡Cuerpos compensados y simétricos! Elige una de las 3 pruebas de los dioses del Olimpo para demostrar tu valía y ascender a ${nextRank.name}.',
                       style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  Text('SELECCIONA TU ESPECIALIZACIÓN DE MAZMORRA:', style: GoogleFonts.orbitron(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.bold)),
+                  Text('SELECCIONA LA PRUEBA DE LOS DIOSES:', style: GoogleFonts.orbitron(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
                   Row(
                     children: [
-                      _dungeonTypeButton('pecho', '🛡️ PECHO', SystemTheme.neonCyan),
+                      _dungeonTypeButton('pecho', '⚡ ZEUS (PECHO)', SystemTheme.neonCyan),
                       const SizedBox(width: 8),
-                      _dungeonTypeButton('espalda', '⚔️ ESPALDA', SystemTheme.electricBlue),
+                      _dungeonTypeButton('espalda', '🔱 POSEIDÓN (ESPALDA)', SystemTheme.electricBlue),
                       const SizedBox(width: 8),
-                      _dungeonTypeButton('pierna', '🏛️ PIERNAS', SystemTheme.spartanGold),
+                      _dungeonTypeButton('pierna', '🔥 HEFESTO (PIERNAS)', SystemTheme.spartanGold),
                     ],
                   ),
                   const SizedBox(height: 16),

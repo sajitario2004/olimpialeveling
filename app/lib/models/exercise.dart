@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class MuscleXpEntry {
   final String muscle;
   final double xp;
@@ -88,6 +90,8 @@ class Exercise {
   }
 
   Map<String, dynamic> toMap() {
+    final list = musclesXp.map((e) => e.toMap()).toList();
+    final jsonStr = jsonEncode(list);
     return {
       'id': id,
       'name': name,
@@ -101,18 +105,50 @@ class Exercise {
       'image_url': imageUrl,
       'gif_url': gifUrl,
       'youtube_url': youtubeUrl,
-      'muscles_xp': musclesXp.map((e) => e.toMap()).toList(),
+      'muscles_xp': list,
+      'muscles_xp_json': jsonStr,
       'allow_dropset': allowDropset ? 1 : 0,
       'max_dropset_multiplier': maxDropsetMultiplier,
     };
   }
 
+  /// Versión específica para inserción segura en bases de datos SQLite
+  Map<String, dynamic> toDbMap() {
+    final map = toMap();
+    final jsonStr = jsonEncode(musclesXp.map((e) => e.toMap()).toList());
+    map['muscles_xp'] = jsonStr;
+    map['muscles_xp_json'] = jsonStr;
+    return map;
+  }
+
   factory Exercise.fromMap(Map<String, dynamic> map) {
     List<MuscleXpEntry>? mList;
-    if (map['muscles_xp'] != null && map['muscles_xp'] is List) {
-      mList = (map['muscles_xp'] as List)
-          .map((item) => MuscleXpEntry.fromMap(Map<String, dynamic>.from(item)))
-          .toList();
+    if (map['muscles_xp'] != null) {
+      if (map['muscles_xp'] is List) {
+        mList = (map['muscles_xp'] as List)
+            .map((item) => MuscleXpEntry.fromMap(Map<String, dynamic>.from(item)))
+            .toList();
+      } else if (map['muscles_xp'] is String && (map['muscles_xp'] as String).isNotEmpty) {
+        try {
+          final decoded = jsonDecode(map['muscles_xp'] as String);
+          if (decoded is List) {
+            mList = decoded
+                .map((item) => MuscleXpEntry.fromMap(Map<String, dynamic>.from(item)))
+                .toList();
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (mList == null && map['muscles_xp_json'] != null && (map['muscles_xp_json'] as String).isNotEmpty) {
+      try {
+        final decoded = jsonDecode(map['muscles_xp_json'] as String);
+        if (decoded is List) {
+          mList = decoded
+              .map((item) => MuscleXpEntry.fromMap(Map<String, dynamic>.from(item)))
+              .toList();
+        }
+      } catch (_) {}
     }
 
     final prim = map['primary_muscle'] ?? (mList != null && mList.isNotEmpty ? mList.first.muscle : 'pecho');

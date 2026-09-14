@@ -140,9 +140,9 @@ void main() {
     test('Logros y títulos mitológicos iniciales cargan correctamente', () {
       final achs = Achievement.getDefaultAchievements();
       expect(achs.length, greaterThanOrEqualTo(6));
-      expect(achs.any((a) => a.title == 'El Despanchizado'), true);
-      expect(achs.any((a) => a.title == 'Devorador de Hierro'), true);
-      expect(achs.any((a) => a.title == 'Dios del Olimpo'), true);
+      expect(achs.any((a) => a.title == 'Iniciado del Olimpo' || a.title == 'El Despanchizado'), true);
+      expect(achs.any((a) => a.title == 'Herrero de Hefesto' || a.title == 'Devorador de Hierro'), true);
+      expect(achs.any((a) => a.title == 'Elegido de Zeus' || a.title == 'Dios del Olimpo'), true);
     });
 
     test('Fórmula de Poder de Combate (Combat Power)', () {

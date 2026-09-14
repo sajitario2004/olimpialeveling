@@ -31,12 +31,31 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(
+    final db = await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _onUpgradeDB,
     );
+    await _ensureSchemaIntegrity(db);
+    return db;
+  }
+
+  static Future<void> _ensureSchemaIntegrity(Database db) async {
+    await _addColumnIfNotExists(db, 'exercises', 'tips', 'TEXT');
+    await _addColumnIfNotExists(db, 'exercises', 'image_url', 'TEXT');
+    await _addColumnIfNotExists(db, 'exercises', 'gif_url', 'TEXT');
+    await _addColumnIfNotExists(db, 'exercises', 'youtube_url', 'TEXT');
+    await _addColumnIfNotExists(db, 'exercises', 'muscles_xp', 'TEXT');
+    await _addColumnIfNotExists(db, 'exercises', 'muscles_xp_json', 'TEXT');
+    await _addColumnIfNotExists(db, 'exercises', 'allow_dropset', 'INTEGER NOT NULL DEFAULT 1');
+    await _addColumnIfNotExists(db, 'exercises', 'max_dropset_multiplier', 'INTEGER NOT NULL DEFAULT 4');
+    await _addColumnIfNotExists(db, 'users', 'uid', 'TEXT');
+    await _addColumnIfNotExists(db, 'users', 'avatar_url', 'TEXT');
+    await _addColumnIfNotExists(db, 'players', 'has_completed_supreme_trial', 'INTEGER NOT NULL DEFAULT 0');
+    await _addColumnIfNotExists(db, 'players', 'rest_tokens', 'INTEGER NOT NULL DEFAULT 1');
+    await _addColumnIfNotExists(db, 'players', 'is_rest_day_used_today', 'INTEGER NOT NULL DEFAULT 0');
+    await _addColumnIfNotExists(db, 'daily_quests', 'is_selected', 'INTEGER NOT NULL DEFAULT 0');
   }
 
   static Future<void> _addColumnIfNotExists(
@@ -135,6 +154,16 @@ class DatabaseHelper {
       await db.execute("UPDATE users SET uid = '000000000000001' WHERE username = 'sajiadmin' AND (uid IS NULL OR uid = '')");
       await _addColumnIfNotExists(db, 'players', 'has_completed_supreme_trial', 'INTEGER NOT NULL DEFAULT 0');
     }
+    if (oldVersion < 6) {
+      await _ensureSchemaIntegrity(db);
+      for (var ex in defaultExercises) {
+        await db.insert(
+          'exercises',
+          ex.toDbMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -185,7 +214,10 @@ class DatabaseHelper {
         image_url TEXT,
         gif_url TEXT,
         youtube_url TEXT,
-        muscles_xp_json TEXT
+        muscles_xp TEXT,
+        muscles_xp_json TEXT,
+        allow_dropset INTEGER NOT NULL DEFAULT 1,
+        max_dropset_multiplier INTEGER NOT NULL DEFAULT 4
       )
     ''');
 
@@ -266,114 +298,118 @@ class DatabaseHelper {
       await db.insert('muscles', m.toMap());
     }
 
-    // Seed default exercises
-    final defaultExercises = [
-      Exercise(
-        id: 'press_inclinado',
-        name: 'Press Inclinado con Barra / Mancuernas',
-        description: 'Deltoides anterior y parte superior del pecho',
-        primaryMuscle: 'deltoides',
-        primaryXpPerKg: 5.0,
-        secondaryMuscle: 'pecho',
-        secondaryXpPerKg: 2.0,
-        baseXp: 20.0,
-      ),
-      Exercise(
-        id: 'press_banca_plano',
-        name: 'Press de Banca Plano',
-        description: 'Masa pectoral completa y tríceps',
-        primaryMuscle: 'pecho',
-        primaryXpPerKg: 5.0,
-        secondaryMuscle: 'triceps',
-        secondaryXpPerKg: 2.0,
-        baseXp: 25.0,
-      ),
-      Exercise(
-        id: 'dominadas',
-        name: 'Dominadas Pronas / Neutras',
-        description: 'Tracción vertical y bíceps',
-        primaryMuscle: 'dorsales',
-        primaryXpPerKg: 4.0,
-        secondaryMuscle: 'biceps',
-        secondaryXpPerKg: 2.5,
-        baseXp: 30.0,
-      ),
-      Exercise(
-        id: 'sentadilla',
-        name: 'Sentadilla Trasera',
-        description: 'Potencia de cuádriceps y glúteos',
-        primaryMuscle: 'cuadriceps',
-        primaryXpPerKg: 5.0,
-        secondaryMuscle: 'gluteos',
-        secondaryXpPerKg: 3.0,
-        baseXp: 30.0,
-      ),
-      Exercise(
-        id: 'peso_muerto',
-        name: 'Peso Muerto Convencional',
-        description: 'Cadena posterior: lumbar e isquios',
-        primaryMuscle: 'lumbar',
-        primaryXpPerKg: 4.0,
-        secondaryMuscle: 'isquiotibiales',
-        secondaryXpPerKg: 3.0,
-        baseXp: 35.0,
-      ),
-      Exercise(
-        id: 'curl_biceps',
-        name: 'Curl de Bíceps',
-        description: 'Aislamiento de brazos y flexores',
-        primaryMuscle: 'biceps',
-        primaryXpPerKg: 6.0,
-        secondaryMuscle: 'antebrazo',
-        secondaryXpPerKg: 2.5,
-        baseXp: 15.0,
-      ),
-      Exercise(
-        id: 'fondos_paralelas',
-        name: 'Fondos en Paralelas (Dips)',
-        description: 'Tríceps y pectoral inferior',
-        primaryMuscle: 'triceps',
-        primaryXpPerKg: 4.5,
-        secondaryMuscle: 'pecho',
-        secondaryXpPerKg: 2.5,
-        baseXp: 25.0,
-      ),
-      Exercise(
-        id: 'elevaciones_laterales',
-        name: 'Elevaciones Laterales',
-        description: 'Deltoides lateral para hombros 3D',
-        primaryMuscle: 'deltoides',
-        primaryXpPerKg: 7.0,
-        secondaryMuscle: 'trapecio',
-        secondaryXpPerKg: 1.5,
-        baseXp: 15.0,
-      ),
-      Exercise(
-        id: 'crunch_abdominal',
-        name: 'Crunch Abdominal / Rueda',
-        description: 'Fuerza de core y recto abdominal',
-        primaryMuscle: 'abdominales',
-        primaryXpPerKg: 4.0,
-        secondaryMuscle: 'oblicuos',
-        secondaryXpPerKg: 2.0,
-        baseXp: 15.0,
-      ),
-      Exercise(
-        id: 'elevacion_talones',
-        name: 'Elevación de Talones de Pie',
-        description: 'Pantorrillas y gemelos',
-        primaryMuscle: 'gemelos',
-        primaryXpPerKg: 4.0,
-        secondaryMuscle: 'antebrazo',
-        secondaryXpPerKg: 0.5,
-        baseXp: 15.0,
-      ),
-    ];
-
     for (var ex in defaultExercises) {
-      await db.insert('exercises', ex.toMap());
+      await db.insert(
+        'exercises',
+        ex.toDbMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     }
   }
+
+  /// Lista base de ejercicios por defecto precargados en el Sistema
+  static final List<Exercise> defaultExercises = [
+    Exercise(
+      id: 'press_inclinado',
+      name: 'Press Inclinado con Barra / Mancuernas',
+      description: 'Deltoides anterior y parte superior del pecho',
+      primaryMuscle: 'deltoides',
+      primaryXpPerKg: 5.0,
+      secondaryMuscle: 'pecho',
+      secondaryXpPerKg: 2.0,
+      baseXp: 20.0,
+    ),
+    Exercise(
+      id: 'press_banca_plano',
+      name: 'Press de Banca Plano',
+      description: 'Masa pectoral completa y tríceps',
+      primaryMuscle: 'pecho',
+      primaryXpPerKg: 5.0,
+      secondaryMuscle: 'triceps',
+      secondaryXpPerKg: 2.0,
+      baseXp: 25.0,
+    ),
+    Exercise(
+      id: 'dominadas',
+      name: 'Dominadas Pronas / Neutras',
+      description: 'Tracción vertical y bíceps',
+      primaryMuscle: 'dorsales',
+      primaryXpPerKg: 4.0,
+      secondaryMuscle: 'biceps',
+      secondaryXpPerKg: 2.5,
+      baseXp: 30.0,
+    ),
+    Exercise(
+      id: 'sentadilla',
+      name: 'Sentadilla Trasera',
+      description: 'Potencia de cuádriceps y glúteos',
+      primaryMuscle: 'cuadriceps',
+      primaryXpPerKg: 5.0,
+      secondaryMuscle: 'gluteos',
+      secondaryXpPerKg: 3.0,
+      baseXp: 30.0,
+    ),
+    Exercise(
+      id: 'peso_muerto',
+      name: 'Peso Muerto Convencional',
+      description: 'Cadena posterior: lumbar e isquios',
+      primaryMuscle: 'lumbar',
+      primaryXpPerKg: 4.0,
+      secondaryMuscle: 'isquiotibiales',
+      secondaryXpPerKg: 3.0,
+      baseXp: 35.0,
+    ),
+    Exercise(
+      id: 'curl_biceps',
+      name: 'Curl de Bíceps',
+      description: 'Aislamiento de brazos y flexores',
+      primaryMuscle: 'biceps',
+      primaryXpPerKg: 6.0,
+      secondaryMuscle: 'antebrazo',
+      secondaryXpPerKg: 2.5,
+      baseXp: 15.0,
+    ),
+    Exercise(
+      id: 'fondos_paralelas',
+      name: 'Fondos en Paralelas (Dips)',
+      description: 'Tríceps y pectoral inferior',
+      primaryMuscle: 'triceps',
+      primaryXpPerKg: 4.5,
+      secondaryMuscle: 'pecho',
+      secondaryXpPerKg: 2.5,
+      baseXp: 25.0,
+    ),
+    Exercise(
+      id: 'elevaciones_laterales',
+      name: 'Elevaciones Laterales',
+      description: 'Deltoides lateral para hombros 3D',
+      primaryMuscle: 'deltoides',
+      primaryXpPerKg: 7.0,
+      secondaryMuscle: 'trapecio',
+      secondaryXpPerKg: 1.5,
+      baseXp: 15.0,
+    ),
+    Exercise(
+      id: 'crunch_abdominal',
+      name: 'Crunch Abdominal / Rueda',
+      description: 'Fuerza de core y recto abdominal',
+      primaryMuscle: 'abdominales',
+      primaryXpPerKg: 4.0,
+      secondaryMuscle: 'oblicuos',
+      secondaryXpPerKg: 2.0,
+      baseXp: 15.0,
+    ),
+    Exercise(
+      id: 'elevacion_talones',
+      name: 'Elevación de Talones de Pie',
+      description: 'Pantorrillas y gemelos',
+      primaryMuscle: 'gemelos',
+      primaryXpPerKg: 4.0,
+      secondaryMuscle: 'antebrazo',
+      secondaryXpPerKg: 0.5,
+      baseXp: 15.0,
+    ),
+  ];
 
   // --- CRUD METHODS ---
 
@@ -418,6 +454,16 @@ class DatabaseHelper {
       whereArgs: [muscleId, muscleId],
     );
     return maps.map((e) => Exercise.fromMap(e)).toList();
+  }
+
+  /// Inserta o actualiza un ejercicio de forma segura con serialización SQLite
+  Future<void> insertOrUpdateExercise(Exercise exercise) async {
+    final db = await database;
+    await db.insert(
+      'exercises',
+      exercise.toDbMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<List<DailyQuest>> getDailyQuestsForDate(String date) async {

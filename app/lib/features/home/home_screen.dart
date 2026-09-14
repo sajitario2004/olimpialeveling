@@ -194,21 +194,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Battle History button
                 IconButton(
                   icon: const Icon(Icons.history_outlined, color: Colors.white70),
-                  tooltip: 'Historial de Batalla',
+                  tooltip: 'Crónicas de Entrenamiento Olímpico',
                   onPressed: () => _openWorkoutHistory(context),
                 ),
 
                 // Quests button
                 IconButton(
                   icon: const Icon(Icons.assignment_turned_in_outlined, color: SystemTheme.neonCyan),
-                  tooltip: 'Misiones Diarias',
+                  tooltip: 'Pruebas Diarias del Olimpo',
                   onPressed: () => _openDailyQuests(context),
                 ),
 
                 // Ascension Dungeon button
                 IconButton(
                   icon: const Icon(Icons.shield_outlined, color: SystemTheme.spartanGold),
-                  tooltip: 'Mazmorra de Ascenso Semanal',
+                  tooltip: 'Pruebas de los Dioses del Olimpo',
                   onPressed: () => _openRankDungeon(context),
                 ),
 
@@ -218,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.person_outline, color: Colors.white),
-                      tooltip: 'Ventana de Estado',
+                      tooltip: 'Estado del Atleta Olímpico',
                       onPressed: () => _openHunterStats(context),
                     ),
                     if (player.unallocatedPoints > 0)

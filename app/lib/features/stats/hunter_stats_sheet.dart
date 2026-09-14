@@ -268,7 +268,7 @@ class HunterStatsSheet extends StatelessWidget {
 
                 // Attributes List
                 Text(
-                  'ATRIBUTOS DEL CAZADOR',
+                  'ATRIBUTOS DEL ATLETA OLÍMPICO',
                   style: GoogleFonts.orbitron(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -283,7 +283,7 @@ class HunterStatsSheet extends StatelessWidget {
                   game,
                   statKey: 'strength',
                   name: 'FUERZA (STR)',
-                  desc: 'Poder de carga y levantamiento pesado',
+                  desc: 'Bendición de Heracles // Poder de carga y levantamiento pesado',
                   value: player.strength,
                   canAdd: player.unallocatedPoints > 0,
                   color: const Color(0xFFEF4444),
@@ -293,7 +293,7 @@ class HunterStatsSheet extends StatelessWidget {
                   game,
                   statKey: 'agility',
                   name: 'AGILIDAD (AGI)',
-                  desc: 'Velocidad, calistenia y rango de movimiento',
+                  desc: 'Zancada de Hermes // Velocidad, calistenia y explosividad',
                   value: player.agility,
                   canAdd: player.unallocatedPoints > 0,
                   color: const Color(0xFF00F0FF),
@@ -303,7 +303,7 @@ class HunterStatsSheet extends StatelessWidget {
                   game,
                   statKey: 'endurance',
                   name: 'RESISTENCIA (END)',
-                  desc: 'Capacidad cardiovascular y aguante muscular',
+                  desc: 'Mareas de Poseidón // Capacidad cardiovascular y aguante titánico',
                   value: player.endurance,
                   canAdd: player.unallocatedPoints > 0,
                   color: const Color(0xFF10B981),
@@ -313,14 +313,14 @@ class HunterStatsSheet extends StatelessWidget {
                   game,
                   statKey: 'discipline',
                   name: 'DISCIPLINA (DIS)',
-                  desc: 'Firmeza mental, constancia y racha inquebrantable',
+                  desc: 'Sabiduría de Atenea // Firmeza mental, constancia y temple espartano',
                   value: player.discipline,
                   canAdd: player.unallocatedPoints > 0,
                   color: const Color(0xFFA855F7),
                 ),
                 const SizedBox(height: 16),
 
-                // Ascension Dungeon Button
+                // Ascension Trial Button
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E293B),
@@ -332,7 +332,7 @@ class HunterStatsSheet extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.shield_outlined, color: SystemTheme.spartanGold),
                   label: Text(
-                    'MAZMORRA DE ASCENSO SEMANAL',
+                    'PRUEBA DE ASCENSO DE LOS DIOSES',
                     style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.8),
                   ),
                   onPressed: () {

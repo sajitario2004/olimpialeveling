@@ -24,7 +24,7 @@ class RankTier {
       minLevel: 0,
       maxLevel: 4,
       color: Color(0xFF94A3B8),
-      quote: 'El punto de partida del despertar. Todo dios fue mortal.',
+      quote: 'Mortal a los pies del Monte Olimpo. Todo héroe comenzó desde el barro.',
     ),
     RankTier(
       id: 'human',
@@ -32,7 +32,7 @@ class RankTier {
       minLevel: 5,
       maxLevel: 14,
       color: Color(0xFF38BDF8),
-      quote: 'Superando la debilidad ordinaria cotidiana.',
+      quote: 'El despertar del atleta sagrado. Hermes guía los primeros pasos hacia la grandeza.',
     ),
     RankTier(
       id: 'normal_gym_buddy',
@@ -40,7 +40,7 @@ class RankTier {
       minLevel: 15,
       maxLevel: 29,
       color: Color(0xFF06B6D4),
-      quote: 'Constancia forjada entrenamiento a entrenamiento.',
+      quote: 'Constancia en la palestra sagrada. Apolo ilumina la disciplina del guerrero.',
     ),
     RankTier(
       id: 'gymbro',
@@ -48,7 +48,7 @@ class RankTier {
       minLevel: 30,
       maxLevel: 49,
       color: Color(0xFF10B981),
-      quote: 'Hermano del hierro respetado por todos en la sala.',
+      quote: 'Hermano de armas bendecido por Hefesto. El hierro forjado se doblega ante ti.',
     ),
     RankTier(
       id: 'soldier',
@@ -56,7 +56,7 @@ class RankTier {
       minLevel: 50,
       maxLevel: 64,
       color: Color(0xFFEAB308),
-      quote: 'Disciplina militar espartana. El dolor es debilidad abandonando el cuerpo.',
+      quote: 'Disciplina espartana bajo el escudo de Atenea. Estrategia, honor y fortaleza.',
     ),
     RankTier(
       id: 'spartan',
@@ -64,7 +64,7 @@ class RankTier {
       minLevel: 65,
       maxLevel: 79,
       color: Color(0xFFF97316),
-      quote: '¡Gloria en la batalla contra el hierro! Voluntad inquebrantable.',
+      quote: 'Espíritu espartano y furia de Poseidón. La gloria eterna se conquista con poder.',
     ),
     RankTier(
       id: 'hercules',
@@ -72,7 +72,7 @@ class RankTier {
       minLevel: 80,
       maxLevel: 98,
       color: Color(0xFFEF4444),
-      quote: 'Fuerza mitológica legendaria sobrehumana.',
+      quote: 'Fuerza titánica semidivina. Los doce trabajos superados ante los ojos de Zeus.',
     ),
     RankTier(
       id: 'god_of_olimpus',
@@ -80,7 +80,7 @@ class RankTier {
       minLevel: 99,
       maxLevel: 100,
       color: Color(0xFFA855F7),
-      quote: 'Ascensión divina consumada en el Olimpo. Cúspide de la gloria.',
+      quote: 'Trono alcanzado junto a Zeus en la cumbre del Olimpo. Inmortal entre los dioses.',
     ),
   ];
 

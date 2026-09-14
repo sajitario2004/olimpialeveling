@@ -52,7 +52,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     if (!_isLoginTab && hunterName.isEmpty) {
-      setState(() => _errorMessage = 'Ingresa el nombre de tu cazador.');
+      setState(() => _errorMessage = 'Ingresa el nombre de tu atleta olímpico.');
       return;
     }
 
@@ -218,8 +218,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   if (!_isLoginTab) ...[
                     _inputField(
                       controller: _hunterNameController,
-                      label: 'NOMBRE DEL CAZADOR',
-                      hint: 'Ej. Jin-Woo / Aquiles',
+                      label: 'NOMBRE DEL ATLETA / HÉROE',
+                      hint: 'Ej. Aquiles / Leónidas / Heracles',
                       icon: Icons.badge_outlined,
                     ),
                     const SizedBox(height: 12),
@@ -299,7 +299,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
                           )
                         : Text(
-                            _isLoginTab ? 'ACCEDER AL SISTEMA' : 'DESPERTAR Y VINCULAR AL SISTEMA',
+                            _isLoginTab ? 'ACCEDER AL MONTE OLIMPO' : 'CONSAGRARSE Y ASCENDER AL OLIMPO',
                             style: GoogleFonts.orbitron(
                               fontSize: 13,
                               fontWeight: FontWeight.w900,

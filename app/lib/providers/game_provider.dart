@@ -299,7 +299,7 @@ class GameProvider extends ChangeNotifier {
       _dailyQuests = [
         DailyQuest(
           id: 'quest_${todayStr}_flexiones',
-          name: '100 Flexiones',
+          name: '100 Flexiones de Heracles',
           target: 100.0,
           unit: 'reps',
           date: todayStr,
@@ -307,21 +307,21 @@ class GameProvider extends ChangeNotifier {
         ),
         DailyQuest(
           id: 'quest_${todayStr}_sentadillas',
-          name: '100 Sentadillas',
+          name: '100 Sentadillas de Ares',
           target: 100.0,
           unit: 'reps',
           date: todayStr,
         ),
         DailyQuest(
           id: 'quest_${todayStr}_abdominales',
-          name: '100 Abdominales',
+          name: '100 Abdominales de Zeus',
           target: 100.0,
           unit: 'reps',
           date: todayStr,
         ),
         DailyQuest(
           id: 'quest_${todayStr}_correr',
-          name: 'Carrera 10 Kilómetros',
+          name: '10 Kilómetros de Hermes',
           target: 10.0,
           unit: 'km',
           date: todayStr,
@@ -622,7 +622,7 @@ class GameProvider extends ChangeNotifier {
       final user = await _db.getUserByUsername(cleanUser);
 
       if (user == null) {
-        return 'Cazador no registrado en el Sistema. Verifica tu usuario o despierta una nueva cuenta.';
+        return 'Atleta no registrado en el Olimpo. Verifica tu nombre o consagra una nueva cuenta.';
       }
 
       final isValid = PasswordHasher.verifyPassword(
@@ -632,7 +632,7 @@ class GameProvider extends ChangeNotifier {
       );
 
       if (!isValid) {
-        return 'Contraseña incorrecta. El Sistema deniega el acceso.';
+        return 'Contraseña incorrecta. Los Dioses del Olimpo deniegan el acceso.';
       }
 
       await _db.saveActiveSession(user.id);
@@ -641,7 +641,7 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
       return null; // Éxito
     } catch (e) {
-      return 'Error al acceder al Sistema: $e';
+      return 'Error al acceder al Templo del Olimpo: $e';
     }
   }
 

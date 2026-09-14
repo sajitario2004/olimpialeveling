@@ -34,21 +34,21 @@ class _SystemBootScreenState extends State<SystemBootScreen> {
     if (!mounted) return;
 
     setState(() {
-      _statusText = 'VERIFICANDO CONDICIÓN FÍSICA DEL CAZADOR...';
+      _statusText = 'CONSAGRANDO AL GUERRERO ANTE LOS DIOSES DEL OLIMPO...';
       _bootProgress = 0.4;
     });
     await Future.delayed(const Duration(milliseconds: 600));
 
     if (!mounted) return;
     setState(() {
-      _statusText = 'SINCRONIZANDO 14 GRUPOS MUSCULARES...';
+      _statusText = 'FORJANDO LOS 14 GRUPOS MUSCULARES EN LA FRAGUA DE HEFESTO...';
       _bootProgress = 0.8;
     });
     await Future.delayed(const Duration(milliseconds: 600));
 
     if (!mounted) return;
     setState(() {
-      _statusText = 'BIENVENIDO AL OLIMPO, CAZADOR.';
+      _statusText = 'BIENVENIDO AL MONTE OLIMPO, ATLETA SAGRADO.';
       _bootProgress = 1.0;
     });
     await Future.delayed(const Duration(milliseconds: 500));

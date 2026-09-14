@@ -3,6 +3,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:olimpia_leveling/core/security/password_hasher.dart';
 import 'package:olimpia_leveling/models/user.dart';
 import 'package:olimpia_leveling/core/database/database_helper.dart';
+import 'package:olimpia_leveling/models/exercise.dart';
 import 'package:olimpia_leveling/providers/game_provider.dart';
 
 void main() {
@@ -162,6 +163,46 @@ void main() {
       await dbHelper.clearActiveSession();
       final cleared = await dbHelper.getActiveSessionUser();
       expect(cleared, isNull);
+    });
+
+    test('Verificación de integridad de esquema en tabla exercises con muscles_xp y dropset', () async {
+      final dbHelper = DatabaseHelper.instance;
+      final exercises = await dbHelper.getAllExercises();
+
+      expect(exercises, isNotEmpty);
+      expect(exercises.length, greaterThanOrEqualTo(10));
+
+      final firstEx = exercises.firstWhere((e) => e.id == 'press_inclinado');
+      expect(firstEx.name, 'Press Inclinado con Barra / Mancuernas');
+      expect(firstEx.musclesXp, isNotEmpty);
+      expect(firstEx.allowDropset, isTrue);
+      expect(firstEx.maxDropsetMultiplier, 4);
+
+      // Inserción y actualización segura con insertOrUpdateExercise
+      final customExercise = Exercise(
+        id: 'test_drop_custom',
+        name: 'Press De Prueba',
+        description: 'Ejercicio creado para pruebas',
+        primaryMuscle: 'pecho',
+        primaryXpPerKg: 5.0,
+        baseXp: 20.0,
+        tips: 'Mantener codos a 45 grados',
+        musclesXp: [
+          const MuscleXpEntry(muscle: 'pecho', xp: 5.0),
+          const MuscleXpEntry(muscle: 'triceps', xp: 2.0),
+        ],
+        allowDropset: true,
+        maxDropsetMultiplier: 3,
+      );
+
+      await dbHelper.insertOrUpdateExercise(customExercise);
+      final retrieved = (await dbHelper.getAllExercises()).firstWhere((e) => e.id == 'test_drop_custom');
+      expect(retrieved.name, 'Press De Prueba');
+      expect(retrieved.musclesXp.length, 2);
+      expect(retrieved.musclesXp.first.muscle, 'pecho');
+      expect(retrieved.musclesXp.first.xp, 5.0);
+      expect(retrieved.allowDropset, isTrue);
+      expect(retrieved.maxDropsetMultiplier, 3);
     });
   });
 
