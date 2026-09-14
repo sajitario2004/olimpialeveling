@@ -166,7 +166,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         Expanded(
                           child: _tabButton(
-                            title: 'DESPERTAR',
+                            title: 'CREAR CUENTA',
                             isSelected: !_isLoginTab,
                             onTap: () => setState(() {
                               _isLoginTab = false;

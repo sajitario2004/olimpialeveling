@@ -753,6 +753,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('NIVEL DEL JUGADOR: '), findsOneWidget);
     expect(find.text('RUTINAS DE ENTRENAMIENTO'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 15));
   });
 
   testWidgets('RankPyramidDialog muestra la jerarquía piramidal de 8 rangos y botón X de cierre', (WidgetTester tester) async {
@@ -803,6 +804,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 15));
 
     expect(find.text('NIVEL DEL JUGADOR: '), findsOneWidget);
     expect(find.text('RUTINAS DE ENTRENAMIENTO'), findsOneWidget);

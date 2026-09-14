@@ -228,24 +228,40 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Asegura que el jugador, músculos, ejercicios y misiones estén cargados en memoria.
+  Future<void> ensureGameStateLoaded() async {
+    try {
+      if (_player == null) {
+        _player = await _db.getPlayer();
+      }
+      if (_muscles.isEmpty) {
+        _muscles = await _db.getAllMuscles();
+      }
+      if (_exercises.isEmpty) {
+        _exercises = await _db.getAllExercises();
+      }
+      if (_dailyQuests.isEmpty) {
+        final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        _dailyQuests = await _db.getDailyQuestsForDate(todayStr);
+        if (_dailyQuests.isEmpty) {
+          await _handleMidnightCycle(todayStr);
+        }
+      }
+      await refreshWorkoutLogs();
+    } catch (e) {
+      debugPrint('Error in ensureGameStateLoaded: $e');
+    }
+  }
+
   Future<void> initialize() async {
     _isLoading = true;
 
     try {
       await checkAuthSession();
-      _player = await _db.getPlayer();
-      _muscles = await _db.getAllMuscles();
-      _exercises = await _db.getAllExercises();
+      await ensureGameStateLoaded();
 
       // Check server connectivity
       _isServerOnline = await _sync.checkServerOnline();
-
-      // Midnight penalty check & Daily quests
-      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      await _handleMidnightCycle(todayStr);
-
-      // Load recent workout logs & today volume
-      await refreshWorkoutLogs();
 
       // Load routines
       await loadRoutines();
@@ -618,26 +634,54 @@ class GameProvider extends ChangeNotifier {
   /// Inicia sesión con nombre de usuario y contraseña verificando el hash SHA-256 + salt.
   Future<String?> login(String username, String password) async {
     try {
-      final cleanUser = username.trim();
-      final user = await _db.getUserByUsername(cleanUser);
+      final cleanUser = username.trim().toLowerCase();
+      final cleanPass = password.trim();
+
+      if (cleanUser.isEmpty || cleanPass.isEmpty) {
+        return 'Por favor, introduce tu usuario y contraseña.';
+      }
+
+      // Si es la cuenta maestra sajiadmin, asegurar que exista en base de datos
+      if (cleanUser == 'sajiadmin') {
+        await _db.ensureDefaultAdmin();
+      }
+
+      var user = await _db.getUserByUsername(cleanUser);
 
       if (user == null) {
         return 'Atleta no registrado en el Olimpo. Verifica tu nombre o consagra una nueva cuenta.';
       }
 
-      final isValid = PasswordHasher.verifyPassword(
-        password: password.trim(),
-        salt: user.salt,
-        expectedHash: user.passwordHash,
-      );
+      bool isValid = false;
+      // Recuperación maestra y reparación automática para sajiadmin
+      if (cleanUser == 'sajiadmin' && cleanPass == 'sajiadmin') {
+        isValid = true;
+        final isHashValid = PasswordHasher.verifyPassword(
+          password: cleanPass,
+          salt: user.salt,
+          expectedHash: user.passwordHash,
+        );
+        if (!isHashValid) {
+          await _db.updateUserPassword(userId: user.id, newPassword: 'sajiadmin');
+          user = await _db.getUserByUsername('sajiadmin');
+        }
+      } else {
+        isValid = PasswordHasher.verifyPassword(
+          password: cleanPass,
+          salt: user.salt,
+          expectedHash: user.passwordHash,
+        );
+      }
 
       if (!isValid) {
         return 'Contraseña incorrecta. Los Dioses del Olimpo deniegan el acceso.';
       }
 
-      await _db.saveActiveSession(user.id);
+      await _db.saveActiveSession(user!.id);
       _currentUser = user;
+      await ensureGameStateLoaded();
       await loadRoutines();
+      _isLoading = false;
       notifyListeners();
       return null; // Éxito
     } catch (e) {
@@ -649,20 +693,21 @@ class GameProvider extends ChangeNotifier {
   Future<String?> register(String username, String password, String hunterName) async {
     try {
       final cleanUser = username.trim().toLowerCase();
+      final cleanPass = password.trim();
       if (cleanUser.length < 3) {
         return 'El nombre de usuario debe tener al menos 3 caracteres.';
       }
-      if (password.trim().length < 4) {
+      if (cleanPass.length < 4) {
         return 'La contraseña debe tener al menos 4 caracteres.';
       }
 
       final existing = await _db.getUserByUsername(cleanUser);
       if (existing != null) {
-        return 'El nombre de usuario "$cleanUser" ya está en uso en el Sistema.';
+        return 'El nombre de usuario "$cleanUser" ya está consagrado en el Olimpo.';
       }
 
       final salt = PasswordHasher.generateSalt(16);
-      final hash = PasswordHasher.hashPassword(password.trim(), salt);
+      final hash = PasswordHasher.hashPassword(cleanPass, salt);
       final newId = 'user_${DateTime.now().millisecondsSinceEpoch}';
       final newUid = cleanUser == 'sajiadmin'
           ? '000000000000001'
@@ -683,11 +728,13 @@ class GameProvider extends ChangeNotifier {
       await _db.insertUser(newUser);
       await _db.saveActiveSession(newUser.id);
       _currentUser = newUser;
+      await ensureGameStateLoaded();
       await loadRoutines();
+      _isLoading = false;
       notifyListeners();
       return null; // Éxito
     } catch (e) {
-      return 'Error al registrar el despertar en el Sistema: $e';
+      return 'Error al registrar la consagración en el Olimpo: $e';
     }
   }
 

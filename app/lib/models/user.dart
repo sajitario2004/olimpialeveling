@@ -57,16 +57,17 @@ class User {
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
+    final rawUsername = (map['username'] as String?) ?? '';
     return User(
-      id: map['id'] as String,
-      uid: map['uid'] as String? ??
-          (map['username'] == 'sajiadmin' ? '000000000000001' : '000000000000001'),
-      username: map['username'] as String,
-      passwordHash: map['password_hash'] as String,
-      salt: map['salt'] as String,
-      role: map['role'] as String? ?? 'hunter',
-      hunterName: map['hunter_name'] as String? ?? map['username'] as String,
-      createdAt: map['created_at'] as String,
+      id: (map['id'] as String?) ?? 'user_default',
+      uid: (map['uid'] as String?) ??
+          (rawUsername == 'sajiadmin' ? '000000000000001' : '000000000000001'),
+      username: rawUsername,
+      passwordHash: (map['password_hash'] as String?) ?? '',
+      salt: (map['salt'] as String?) ?? '',
+      role: (map['role'] as String?) ?? (rawUsername == 'sajiadmin' ? 'admin,developer' : 'hunter'),
+      hunterName: (map['hunter_name'] as String?) ?? (rawUsername.isNotEmpty ? rawUsername : 'Atleta del Olimpo'),
+      createdAt: (map['created_at'] as String?) ?? DateTime.now().toIso8601String(),
       lastLogin: map['last_login'] as String?,
       avatarUrl: map['avatar_url'] as String?,
     );

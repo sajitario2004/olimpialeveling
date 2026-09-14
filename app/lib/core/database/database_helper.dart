@@ -42,6 +42,96 @@ class DatabaseHelper {
   }
 
   static Future<void> _ensureSchemaIntegrity(Database db) async {
+    // 1. Asegurar la creación de todas las tablas si no existen (recuperación de instalaciones limpias o incompletas)
+    await _createAuthTables(db);
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS players (
+        id TEXT PRIMARY KEY,
+        total_level INTEGER NOT NULL,
+        strength INTEGER NOT NULL,
+        agility INTEGER NOT NULL,
+        endurance INTEGER NOT NULL,
+        discipline INTEGER NOT NULL,
+        unallocated_points INTEGER NOT NULL,
+        streak_days INTEGER NOT NULL,
+        last_active_date TEXT NOT NULL,
+        completed_daily_date TEXT,
+        equipped_title TEXT,
+        selected_daily_quest_id TEXT,
+        rest_tokens INTEGER NOT NULL DEFAULT 1,
+        is_rest_day_used_today INTEGER NOT NULL DEFAULT 0,
+        has_completed_supreme_trial INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS muscles (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        current_xp REAL NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS exercises (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        tips TEXT,
+        primary_muscle TEXT NOT NULL,
+        primary_xp_per_kg REAL NOT NULL,
+        secondary_muscle TEXT,
+        secondary_xp_per_kg REAL,
+        base_xp REAL NOT NULL,
+        image_url TEXT,
+        gif_url TEXT,
+        youtube_url TEXT,
+        muscles_xp TEXT,
+        muscles_xp_json TEXT,
+        allow_dropset INTEGER NOT NULL DEFAULT 1,
+        max_dropset_multiplier INTEGER NOT NULL DEFAULT 4
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS routines (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        exercises_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS daily_quests (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        target REAL NOT NULL,
+        current REAL NOT NULL,
+        unit TEXT NOT NULL,
+        is_completed INTEGER NOT NULL,
+        is_selected INTEGER NOT NULL DEFAULT 0,
+        date TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS workout_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exercise_id TEXT NOT NULL,
+        weight REAL NOT NULL,
+        reps INTEGER NOT NULL,
+        xp_awarded REAL NOT NULL,
+        muscle_id TEXT NOT NULL,
+        timestamp TEXT NOT NULL
+      )
+    ''');
+
+    // 2. Asegurar todas las columnas agregadas a través de versiones
     await _addColumnIfNotExists(db, 'exercises', 'tips', 'TEXT');
     await _addColumnIfNotExists(db, 'exercises', 'image_url', 'TEXT');
     await _addColumnIfNotExists(db, 'exercises', 'gif_url', 'TEXT');
@@ -52,10 +142,56 @@ class DatabaseHelper {
     await _addColumnIfNotExists(db, 'exercises', 'max_dropset_multiplier', 'INTEGER NOT NULL DEFAULT 4');
     await _addColumnIfNotExists(db, 'users', 'uid', 'TEXT');
     await _addColumnIfNotExists(db, 'users', 'avatar_url', 'TEXT');
+    await _addColumnIfNotExists(db, 'players', 'equipped_title', 'TEXT');
+    await _addColumnIfNotExists(db, 'players', 'selected_daily_quest_id', 'TEXT');
     await _addColumnIfNotExists(db, 'players', 'has_completed_supreme_trial', 'INTEGER NOT NULL DEFAULT 0');
     await _addColumnIfNotExists(db, 'players', 'rest_tokens', 'INTEGER NOT NULL DEFAULT 1');
     await _addColumnIfNotExists(db, 'players', 'is_rest_day_used_today', 'INTEGER NOT NULL DEFAULT 0');
     await _addColumnIfNotExists(db, 'daily_quests', 'is_selected', 'INTEGER NOT NULL DEFAULT 0');
+
+    // 3. Autocuración de registros por defecto si faltan (muscles, exercises, player, admin)
+    try {
+      final playerRows = await db.rawQuery("SELECT COUNT(*) as c FROM players WHERE id = 'main_hunter'");
+      final playerCount = (playerRows.isNotEmpty ? playerRows.first['c'] as int? : 0) ?? 0;
+      if (playerCount == 0) {
+        final nowStr = DateTime.now().toIso8601String().split('T')[0];
+        final initialPlayer = Player(
+          id: 'main_hunter',
+          totalLevel: 14,
+          strength: 10,
+          agility: 10,
+          endurance: 10,
+          discipline: 10,
+          unallocatedPoints: 0,
+          streakDays: 1,
+          lastActiveDate: nowStr,
+        );
+        await db.insert('players', initialPlayer.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    } catch (_) {}
+
+    try {
+      final muscleRows = await db.rawQuery("SELECT COUNT(*) as c FROM muscles");
+      final muscleCount = (muscleRows.isNotEmpty ? muscleRows.first['c'] as int? : 0) ?? 0;
+      if (muscleCount == 0) {
+        for (var m in defaultMuscles) {
+          await db.insert('muscles', m.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final exRows = await db.rawQuery("SELECT COUNT(*) as c FROM exercises");
+      final exerciseCount = (exRows.isNotEmpty ? exRows.first['c'] as int? : 0) ?? 0;
+      if (exerciseCount == 0) {
+        for (var ex in defaultExercises) {
+          await db.insert('exercises', ex.toDbMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+    } catch (_) {}
+
+    // Asegurar cuenta sajiadmin
+    await _seedDefaultAdmin(db);
   }
 
   static Future<void> _addColumnIfNotExists(
@@ -71,7 +207,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> _createAuthTables(Database db) async {
+  static Future<void> _createAuthTables(Database db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
@@ -96,28 +232,61 @@ class DatabaseHelper {
     ''');
   }
 
-  Future<void> _seedDefaultAdmin(Database db) async {
-    final existing = await db.query(
-      'users',
-      where: 'username = ?',
-      whereArgs: ['sajiadmin'],
-    );
-    if (existing.isEmpty) {
-      final salt = PasswordHasher.generateSalt(16);
-      final hash = PasswordHasher.hashPassword('sajiadmin', salt);
-      await db.insert('users', {
-        'id': 'user_sajiadmin_root',
-        'uid': '000000000000001',
-        'username': 'sajiadmin',
-        'password_hash': hash,
-        'salt': salt,
-        'role': 'admin,developer',
-        'hunter_name': 'Saji (Arquitecto del Olimpo)',
-        'created_at': DateTime.now().toIso8601String(),
-        'last_login': null,
-        'avatar_url': null,
-      });
-    }
+  static Future<void> _seedDefaultAdmin(Database db) async {
+    try {
+      final existing = await db.query(
+        'users',
+        where: 'LOWER(username) = ?',
+        whereArgs: ['sajiadmin'],
+      );
+      if (existing.isEmpty) {
+        final salt = PasswordHasher.generateSalt(16);
+        final hash = PasswordHasher.hashPassword('sajiadmin', salt);
+        await db.insert(
+          'users',
+          {
+            'id': 'user_sajiadmin_root',
+            'uid': '000000000000001',
+            'username': 'sajiadmin',
+            'password_hash': hash,
+            'salt': salt,
+            'role': 'admin,developer',
+            'hunter_name': 'Saji (Arquitecto del Olimpo)',
+            'created_at': DateTime.now().toIso8601String(),
+            'last_login': null,
+            'avatar_url': null,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      } else {
+        // Si existe sajiadmin, verificar que salt, hash y uid no estén vacíos o corruptos
+        final userMap = existing.first;
+        final hash = userMap['password_hash'] as String?;
+        final salt = userMap['salt'] as String?;
+        final uid = userMap['uid'] as String?;
+        if (hash == null || hash.isEmpty || salt == null || salt.isEmpty || uid == null || uid.isEmpty) {
+          final newSalt = (salt != null && salt.isNotEmpty) ? salt : PasswordHasher.generateSalt(16);
+          final newHash = PasswordHasher.hashPassword('sajiadmin', newSalt);
+          await db.update(
+            'users',
+            {
+              'password_hash': newHash,
+              'salt': newSalt,
+              'uid': '000000000000001',
+              'role': 'admin,developer',
+            },
+            where: 'LOWER(username) = ?',
+            whereArgs: ['sajiadmin'],
+          );
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Método público para garantizar que sajiadmin exista en cualquier momento
+  Future<void> ensureDefaultAdmin() async {
+    final db = await database;
+    await _seedDefaultAdmin(db);
   }
 
   Future<void> _onUpgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -274,28 +443,10 @@ class DatabaseHelper {
       streakDays: 1,
       lastActiveDate: nowStr,
     );
-    await db.insert('players', initialPlayer.toMap());
-
-    // Seed the 14 muscles
-    final defaultMuscles = [
-      Muscle(id: 'pecho', name: 'Pecho', category: 'front', level: 1),
-      Muscle(id: 'triceps', name: 'Tríceps', category: 'back', level: 1),
-      Muscle(id: 'biceps', name: 'Bíceps', category: 'front', level: 1),
-      Muscle(id: 'antebrazo', name: 'Antebrazo', category: 'front', level: 1),
-      Muscle(id: 'dorsales', name: 'Dorsales', category: 'back', level: 1),
-      Muscle(id: 'trapecio', name: 'Trapecio', category: 'back', level: 1),
-      Muscle(id: 'lumbar', name: 'Lumbar', category: 'back', level: 1),
-      Muscle(id: 'deltoides', name: 'Deltoides', category: 'both', level: 1),
-      Muscle(id: 'cuadriceps', name: 'Cuádriceps', category: 'front', level: 1),
-      Muscle(id: 'isquiotibiales', name: 'Isquiotibiales', category: 'back', level: 1),
-      Muscle(id: 'gluteos', name: 'Glúteos', category: 'back', level: 1),
-      Muscle(id: 'gemelos', name: 'Gemelos', category: 'both', level: 1),
-      Muscle(id: 'abdominales', name: 'Abdominales', category: 'front', level: 1),
-      Muscle(id: 'oblicuos', name: 'Oblicuos', category: 'front', level: 1),
-    ];
+    await db.insert('players', initialPlayer.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
 
     for (var m in defaultMuscles) {
-      await db.insert('muscles', m.toMap());
+      await db.insert('muscles', m.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
     for (var ex in defaultExercises) {
@@ -306,6 +457,24 @@ class DatabaseHelper {
       );
     }
   }
+
+  /// Los 14 grupos musculares sagrados del Olimpo
+  static final List<Muscle> defaultMuscles = [
+    Muscle(id: 'pecho', name: 'Pecho', category: 'front', level: 1),
+    Muscle(id: 'triceps', name: 'Tríceps', category: 'back', level: 1),
+    Muscle(id: 'biceps', name: 'Bíceps', category: 'front', level: 1),
+    Muscle(id: 'antebrazo', name: 'Antebrazo', category: 'front', level: 1),
+    Muscle(id: 'dorsales', name: 'Dorsales', category: 'back', level: 1),
+    Muscle(id: 'trapecio', name: 'Trapecio', category: 'back', level: 1),
+    Muscle(id: 'lumbar', name: 'Lumbar', category: 'back', level: 1),
+    Muscle(id: 'deltoides', name: 'Deltoides', category: 'both', level: 1),
+    Muscle(id: 'cuadriceps', name: 'Cuádriceps', category: 'front', level: 1),
+    Muscle(id: 'isquiotibiales', name: 'Isquiotibiales', category: 'back', level: 1),
+    Muscle(id: 'gluteos', name: 'Glúteos', category: 'back', level: 1),
+    Muscle(id: 'gemelos', name: 'Gemelos', category: 'both', level: 1),
+    Muscle(id: 'abdominales', name: 'Abdominales', category: 'front', level: 1),
+    Muscle(id: 'oblicuos', name: 'Oblicuos', category: 'front', level: 1),
+  ];
 
   /// Lista base de ejercicios por defecto precargados en el Sistema
   static final List<Exercise> defaultExercises = [

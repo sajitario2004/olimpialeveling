@@ -28,6 +28,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentTabIndex = 1; // Pestaña del medio (Principal) por defecto
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final game = Provider.of<GameProvider>(context, listen: false);
+      if (game.player == null) {
+        game.ensureGameStateLoaded();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
       builder: (context, game, child) {
@@ -74,7 +85,35 @@ class _HomeScreenState extends State<HomeScreen> {
         });
 
         if (player == null || game.isLoading) {
+          if (player == null && !game.isLoading) {
+            return Scaffold(
+              backgroundColor: const Color(0xFF070B14),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(color: SystemTheme.neonCyan),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Sincronizando estado con el Monte Olimpo...',
+                        style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 16),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => game.ensureGameStateLoaded(),
+                        style: ElevatedButton.styleFrom(backgroundColor: SystemTheme.neonCyan),
+                        child: const Text('REINTENTAR ACCESO', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
           return const Scaffold(
+            backgroundColor: Color(0xFF070B14),
             body: Center(
               child: CircularProgressIndicator(color: SystemTheme.neonCyan),
             ),

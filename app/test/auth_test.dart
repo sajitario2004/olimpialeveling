@@ -250,5 +250,57 @@ void main() {
 
       await game.logout();
     });
+
+    test('Autocuración de sajiadmin si la contraseña o salt estaban corruptos en SQLite', () async {
+      final dbHelper = DatabaseHelper.instance;
+      final db = await dbHelper.database;
+
+      // Corromper intencionadamente el hash y salt de sajiadmin
+      await db.rawUpdate(
+        "UPDATE users SET password_hash = 'hash_invalido_corrupto', salt = '' WHERE username = 'sajiadmin'",
+      );
+
+      final game = GameProvider();
+      // El login de sajiadmin con sajiadmin debe detectar la corrupción, auto-reparar el hash y permitir el acceso
+      final error = await game.login('sajiadmin', 'sajiadmin');
+      expect(error, isNull);
+      expect(game.isAuthenticated, isTrue);
+      expect(game.currentUser?.username, 'sajiadmin');
+      expect(game.player, isNotNull);
+      expect(game.muscles, isNotEmpty);
+      expect(game.exercises, isNotEmpty);
+
+      // Verificar que en base de datos el hash ya quedó reparado
+      final repairedUser = await dbHelper.getUserByUsername('sajiadmin');
+      expect(repairedUser, isNotNull);
+      expect(repairedUser!.salt, isNotEmpty);
+      expect(
+        PasswordHasher.verifyPassword(
+          password: 'sajiadmin',
+          salt: repairedUser.salt,
+          expectedHash: repairedUser.passwordHash,
+        ),
+        isTrue,
+      );
+
+      await game.logout();
+    });
+
+    test('Pre-carga inmediata del estado del jugador al registrar un nuevo atleta olímpico', () async {
+      final game = GameProvider();
+      final user = 'atleta_${DateTime.now().millisecondsSinceEpoch}';
+      final error = await game.register(user, 'claveSegura123', 'Guerrero de Esparta');
+
+      expect(error, isNull);
+      expect(game.isAuthenticated, isTrue);
+      // El estado del juego debe estar listo inmediatamente para que HomeScreen no se quede en bucle
+      expect(game.player, isNotNull);
+      expect(game.player!.id, 'main_hunter');
+      expect(game.muscles.length, 14);
+      expect(game.exercises, isNotEmpty);
+      expect(game.isLoading, isFalse);
+
+      await game.logout();
+    });
   });
 }
