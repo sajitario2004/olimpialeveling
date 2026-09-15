@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../../models/muscle.dart';
@@ -182,17 +184,50 @@ class DatabaseHelper {
     } catch (_) {}
 
     try {
-      final exRows = await db.rawQuery("SELECT COUNT(*) as c FROM exercises");
-      final exerciseCount = (exRows.isNotEmpty ? exRows.first['c'] as int? : 0) ?? 0;
-      if (exerciseCount == 0) {
-        for (var ex in defaultExercises) {
-          await db.insert('exercises', ex.toDbMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      await syncExercisesFromAssets(db);
+    } catch (_) {
+      try {
+        final exRows = await db.rawQuery("SELECT COUNT(*) as c FROM exercises");
+        final exerciseCount = (exRows.isNotEmpty ? exRows.first['c'] as int? : 0) ?? 0;
+        if (exerciseCount == 0) {
+          for (var ex in defaultExercises) {
+            await db.insert('exercises', ex.toDbMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     // Asegurar cuenta sajiadmin
     await _seedDefaultAdmin(db);
+  }
+
+  /// Sincroniza y actualiza la lista de ejercicios embebida en el APK (game_config.json) hacia SQLite.
+  /// Si el usuario editó fotos, vídeos de YouTube o XP en el servidor Python y exportó a assets,
+  /// los cambios se reflejan inmediatamente en la base de datos de la app.
+  static Future<void> syncExercisesFromAssets(Database db) async {
+    try {
+      final jsonStr = await rootBundle.loadString('assets/config/game_config.json');
+      final Map<String, dynamic> data = jsonDecode(jsonStr);
+      if (data.containsKey('exercises') && data['exercises'] is List) {
+        final list = data['exercises'] as List;
+        for (var raw in list) {
+          try {
+            final ex = Exercise.fromMap(Map<String, dynamic>.from(raw));
+            await db.insert('exercises', ex.toDbMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+          } catch (_) {}
+        }
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback con defaultExercises si no existe o falla el asset
+    final exRows = await db.rawQuery("SELECT COUNT(*) as c FROM exercises");
+    final exerciseCount = (exRows.isNotEmpty ? exRows.first['c'] as int? : 0) ?? 0;
+    if (exerciseCount == 0) {
+      for (var ex in defaultExercises) {
+        await db.insert('exercises', ex.toDbMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    }
   }
 
   static Future<void> _addColumnIfNotExists(
