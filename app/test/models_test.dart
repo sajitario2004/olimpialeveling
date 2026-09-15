@@ -487,5 +487,64 @@ void main() {
       expect(restored.exercises[1].primaryMuscle, 'biceps');
       expect(restored.exercises[1].targetWeightKg, 15.0);
     });
+
+    test('Modelo RoutineSet y series individualizadas con peso, reps y descanso independientes', () {
+      final customSets = [
+        const RoutineSet(setNumber: 1, weightKg: 60.0, reps: 15, restSeconds: 60),
+        const RoutineSet(setNumber: 2, weightKg: 80.0, reps: 10, restSeconds: 90),
+        const RoutineSet(setNumber: 3, weightKg: 100.0, reps: 6, restSeconds: 120),
+        const RoutineSet(setNumber: 4, weightKg: 110.0, reps: 2, restSeconds: 180),
+      ];
+
+      final exercise = RoutineExercise(
+        exerciseId: 'press_banca',
+        exerciseName: 'Press de Banca',
+        primaryMuscle: 'pecho',
+        individualSets: customSets,
+      );
+
+      expect(exercise.sets, 4);
+      expect(exercise.getSet(1).weightKg, 60.0);
+      expect(exercise.getSet(2).weightKg, 80.0);
+      expect(exercise.getSet(3).weightKg, 100.0);
+      expect(exercise.getSet(4).weightKg, 110.0);
+      expect(exercise.getSet(4).restSeconds, 180);
+
+      // Serialización y deserialización conservando datos individuales
+      final map = exercise.toMap();
+      final restored = RoutineExercise.fromMap(map);
+
+      expect(restored.individualSets.length, 4);
+      expect(restored.individualSets[0].weightKg, 60.0);
+      expect(restored.individualSets[1].reps, 10);
+      expect(restored.individualSets[2].restSeconds, 120);
+      expect(restored.individualSets[3].weightKg, 110.0);
+    });
+
+    test('Player.lastCompletedTrialLevel y bloqueo de subida de nivel sin Superentrenamiento', () {
+      final player = Player(
+        id: 'hunter_heracles',
+        totalLevel: 14,
+        lastActiveDate: '2026-09-15',
+        lastCompletedTrialLevel: 4, // Completó la prueba del nivel 4, pero no la del 14
+      );
+
+      // Nivel 14 es nivel de prueba semanal de ascenso
+      expect(RankTier.trialLevels.contains(14), isTrue);
+      // Como no ha completado la prueba de nivel 14, debe estar bloqueado
+      expect(player.lastCompletedTrialLevel < player.totalLevel, isTrue);
+
+      // Serialización a SQLite y deserialización
+      final playerMap = player.toMap();
+      expect(playerMap['last_completed_trial_level'], 4);
+
+      final restored = Player.fromMap(playerMap);
+      expect(restored.lastCompletedTrialLevel, 4);
+
+      // Al completar el superentrenamiento:
+      restored.lastCompletedTrialLevel = 14;
+      expect(restored.lastCompletedTrialLevel, 14);
+      expect(restored.lastCompletedTrialLevel < restored.totalLevel, isFalse);
+    });
   });
 }

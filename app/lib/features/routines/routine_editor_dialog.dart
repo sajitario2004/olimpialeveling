@@ -6,7 +6,8 @@ import '../../../models/exercise.dart';
 import '../../../models/routine.dart';
 import '../../../providers/game_provider.dart';
 
-/// Modal o pantalla para crear o editar por completo una rutina personalizada.
+/// Modal o pantalla para crear o editar por completo una rutina personalizada,
+/// con tabla interactiva de series por ejercicio (peso, reps, descanso individuales).
 class RoutineEditorDialog extends StatefulWidget {
   final Routine? initialRoutine;
 
@@ -21,6 +22,7 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
   final _searchController = TextEditingController();
   final List<RoutineExercise> _selectedExercises = [];
   String _searchQuery = '';
+  bool _isExerciseCatalogExpanded = true;
 
   @override
   void initState() {
@@ -61,16 +63,90 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
           targetReps: 12,
           restSeconds: 90,
           primaryMuscle: ex.primaryMuscle,
+          individualSets: [
+            const RoutineSet(setNumber: 1, weightKg: 20.0, reps: 12, restSeconds: 90),
+            const RoutineSet(setNumber: 2, weightKg: 20.0, reps: 12, restSeconds: 90),
+            const RoutineSet(setNumber: 3, weightKg: 20.0, reps: 12, restSeconds: 90),
+          ],
         ),
       );
-      _searchController.clear();
-      _searchQuery = '';
     });
   }
 
   void _removeExercise(int index) {
     setState(() {
       _selectedExercises.removeAt(index);
+    });
+  }
+
+  void _addSetToExercise(int exerciseIndex) {
+    final ex = _selectedExercises[exerciseIndex];
+    final lastSet = ex.individualSets.isNotEmpty
+        ? ex.individualSets.last
+        : const RoutineSet(setNumber: 1, weightKg: 20.0, reps: 12, restSeconds: 90);
+    final newSet = RoutineSet(
+      setNumber: ex.individualSets.length + 1,
+      weightKg: lastSet.weightKg,
+      reps: lastSet.reps,
+      restSeconds: lastSet.restSeconds,
+    );
+    final updatedSets = List<RoutineSet>.from(ex.individualSets)..add(newSet);
+    setState(() {
+      _selectedExercises[exerciseIndex] = ex.copyWith(
+        individualSets: updatedSets,
+        sets: updatedSets.length,
+      );
+    });
+  }
+
+  void _removeSetFromExercise(int exerciseIndex, int setIndex) {
+    final ex = _selectedExercises[exerciseIndex];
+    if (ex.individualSets.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Un ejercicio debe tener al menos 1 serie.'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      return;
+    }
+    final updatedSets = List<RoutineSet>.from(ex.individualSets)..removeAt(setIndex);
+    final reindexed = List.generate(
+      updatedSets.length,
+      (i) => updatedSets[i].copyWith(setNumber: i + 1),
+    );
+    setState(() {
+      _selectedExercises[exerciseIndex] = ex.copyWith(
+        individualSets: reindexed,
+        sets: reindexed.length,
+      );
+    });
+  }
+
+  void _updateSetWeight(int exerciseIndex, int setIndex, double weight) {
+    final ex = _selectedExercises[exerciseIndex];
+    final updatedSets = List<RoutineSet>.from(ex.individualSets);
+    updatedSets[setIndex] = updatedSets[setIndex].copyWith(weightKg: weight);
+    setState(() {
+      _selectedExercises[exerciseIndex] = ex.copyWith(individualSets: updatedSets);
+    });
+  }
+
+  void _updateSetReps(int exerciseIndex, int setIndex, int reps) {
+    final ex = _selectedExercises[exerciseIndex];
+    final updatedSets = List<RoutineSet>.from(ex.individualSets);
+    updatedSets[setIndex] = updatedSets[setIndex].copyWith(reps: reps);
+    setState(() {
+      _selectedExercises[exerciseIndex] = ex.copyWith(individualSets: updatedSets);
+    });
+  }
+
+  void _updateSetRest(int exerciseIndex, int setIndex, int restSeconds) {
+    final ex = _selectedExercises[exerciseIndex];
+    final updatedSets = List<RoutineSet>.from(ex.individualSets);
+    updatedSets[setIndex] = updatedSets[setIndex].copyWith(restSeconds: restSeconds);
+    setState(() {
+      _selectedExercises[exerciseIndex] = ex.copyWith(individualSets: updatedSets);
     });
   }
 
@@ -125,19 +201,20 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
   Widget build(BuildContext context) {
     final game = context.watch<GameProvider>();
     final allExercises = game.exercises;
-    final filteredExercises = _searchQuery.isEmpty
-        ? []
+    final query = _searchQuery.trim().toLowerCase();
+    final displayedExercises = query.isEmpty
+        ? allExercises
         : allExercises
-            .where((e) => e.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                e.primaryMuscle.toLowerCase().contains(_searchQuery.toLowerCase()))
-            .take(5)
+            .where((e) =>
+                e.name.toLowerCase().contains(query) ||
+                e.primaryMuscle.toLowerCase().contains(query))
             .toList();
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 750),
+        constraints: const BoxConstraints(maxWidth: 700, maxHeight: 850),
         decoration: BoxDecoration(
           color: const Color(0xFF0B1120),
           borderRadius: BorderRadius.circular(20),
@@ -209,7 +286,7 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                         color: Colors.white,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Ej: Día de Pecho, Día de Pierna...',
+                        hintText: 'Ej: Día de Pecho, Pierna Olímpica...',
                         hintStyle: const TextStyle(color: Colors.white30),
                         filled: true,
                         fillColor: const Color(0xFF1E293B),
@@ -227,24 +304,57 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
 
                     const SizedBox(height: 18),
 
-                    // BUSCADOR DE EJERCICIOS PARA AÑADIR
-                    Text(
-                      'BUSCAR Y AÑADIR EJERCICIOS',
-                      style: GoogleFonts.orbitron(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: SystemTheme.neonCyan,
-                      ),
+                    // CATÁLOGO DE EJERCICIOS PARA AÑADIR (SIEMPRE DISPONIBLES)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.search, color: SystemTheme.neonCyan, size: 18),
+                            const SizedBox(width: 6),
+                            Text(
+                              'CATÁLOGO DE EJERCICIOS (${displayedExercises.length})',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: SystemTheme.neonCyan,
+                              ),
+                            ),
+                          ],
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(() => _isExerciseCatalogExpanded = !_isExerciseCatalogExpanded),
+                          child: Text(
+                            _isExerciseCatalogExpanded ? 'Ocultar catálogo ▲' : 'Mostrar catálogo ▼',
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 11,
+                              color: Colors.white60,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
+
+                    // BUSCADOR CON LUPA
                     TextField(
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
                       style: GoogleFonts.rajdhani(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: 'Escribe para buscar (ej: press, sentadilla, curl)...',
+                        hintText: 'Filtrar por nombre o músculo (o selecciona de la lista)...',
                         hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
                         prefixIcon: const Icon(Icons.search, color: SystemTheme.neonCyan, size: 20),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, color: Colors.white54, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
                         filled: true,
                         fillColor: const Color(0xFF1E293B),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -255,79 +365,129 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                       ),
                     ),
 
-                    // LISTA DE SUGERENCIAS DE BÚSQUEDA
-                    if (filteredExercises.isNotEmpty) ...[
+                    // LISTA DE EJERCICIOS (TODOS DISPONIBLES POR DEFECTO)
+                    if (_isExerciseCatalogExpanded) ...[
                       const SizedBox(height: 8),
                       Container(
+                        height: 170,
                         decoration: BoxDecoration(
                           color: const Color(0xFF131C31),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.3)),
                         ),
-                        child: Column(
-                          children: filteredExercises.map((ex) {
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(Icons.add_circle_outline, color: SystemTheme.neonCyan, size: 20),
-                              title: Text(
-                                ex.name,
-                                style: GoogleFonts.rajdhani(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: 14,
+                        child: displayedExercises.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'No hay ejercicios con ese criterio.',
+                                  style: GoogleFonts.rajdhani(color: Colors.white54),
                                 ),
+                              )
+                            : ListView.separated(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                itemCount: displayedExercises.length,
+                                separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                                itemBuilder: (context, idx) {
+                                  final ex = displayedExercises[idx];
+                                  final isAlreadyAdded = _selectedExercises.any((e) => e.exerciseId == ex.id);
+
+                                  return ListTile(
+                                    dense: true,
+                                    leading: Icon(
+                                      isAlreadyAdded ? Icons.check_circle : Icons.add_circle_outline,
+                                      color: isAlreadyAdded ? Colors.greenAccent : SystemTheme.neonCyan,
+                                      size: 20,
+                                    ),
+                                    title: Text(
+                                      ex.name,
+                                      style: GoogleFonts.rajdhani(
+                                        fontWeight: FontWeight.bold,
+                                        color: isAlreadyAdded ? Colors.white54 : Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      'Músculo: ${ex.primaryMuscle.toUpperCase()}',
+                                      style: GoogleFonts.rajdhani(color: Colors.white38, fontSize: 11),
+                                    ),
+                                    trailing: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isAlreadyAdded
+                                            ? Colors.white12
+                                            : SystemTheme.neonCyan.withOpacity(0.2),
+                                        foregroundColor: isAlreadyAdded ? Colors.white38 : SystemTheme.neonCyan,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        visualDensity: VisualDensity.compact,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                          side: BorderSide(
+                                            color: isAlreadyAdded
+                                                ? Colors.white24
+                                                : SystemTheme.neonCyan.withOpacity(0.6),
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: isAlreadyAdded ? null : () => _addExercise(ex),
+                                      child: Text(
+                                        isAlreadyAdded ? 'Añadido' : '+ Añadir',
+                                        style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                              subtitle: Text(
-                                'Músculo: ${ex.primaryMuscle.toUpperCase()}',
-                                style: GoogleFonts.rajdhani(color: Colors.white60, fontSize: 11),
-                              ),
-                              onTap: () => _addExercise(ex),
-                            );
-                          }).toList(),
-                        ),
                       ),
                     ],
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
-                    // EJERCICIOS AÑADIDOS A LA RUTINA
+                    // EJERCICIOS EN LA RUTINA CON TABLA DE SERIES PERSONALIZADAS
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'EJERCICIOS EN ESTA RUTINA (${_selectedExercises.length})',
+                          'EJERCICIOS CONFIGURADOS (${_selectedExercises.length})',
                           style: GoogleFonts.orbitron(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
+                            letterSpacing: 1.1,
                           ),
                         ),
                         if (_selectedExercises.isNotEmpty)
                           Text(
-                            'Configura series y descanso',
-                            style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white54),
+                            'Personaliza cada serie',
+                            style: GoogleFonts.rajdhani(fontSize: 11, color: SystemTheme.spartanGold),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
                     if (_selectedExercises.isEmpty)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
                         decoration: BoxDecoration(
                           color: const Color(0xFF131C31),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.white12),
                         ),
                         child: Center(
-                          child: Text(
-                            'Aún no has añadido ejercicios.\nUsa el buscador superior para agregar ejercicios a tu rutina.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.rajdhani(
-                              fontSize: 13,
-                              color: Colors.white54,
-                            ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.playlist_add, color: Colors.white38, size: 36),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Aún no has añadido ejercicios.',
+                                style: GoogleFonts.orbitron(fontSize: 13, color: Colors.white70),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Selecciona ejercicios del catálogo superior para configurar series, peso y descanso.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white38),
+                              ),
+                            ],
                           ),
                         ),
                       )
@@ -336,113 +496,254 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _selectedExercises.length,
-                        itemBuilder: (context, index) {
-                          final item = _selectedExercises[index];
+                        itemBuilder: (context, exIdx) {
+                          final item = _selectedExercises[exIdx];
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
+                            margin: const EdgeInsets.only(bottom: 16),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: const Color(0xFF131C31),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white12),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: SystemTheme.neonCyan.withOpacity(0.3),
+                                width: 1.2,
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // CABECERA DEL EJERCICIO
                                 Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: SystemTheme.neonCyan.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.5)),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.6)),
                                       ),
                                       child: Text(
-                                        '#${index + 1}',
+                                        '#${exIdx + 1}',
                                         style: GoogleFonts.orbitron(
-                                          fontSize: 10,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                           color: SystemTheme.neonCyan,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 10),
                                     Expanded(
-                                      child: Text(
-                                        item.exerciseName,
-                                        style: GoogleFonts.orbitron(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.exerciseName,
+                                            style: GoogleFonts.orbitron(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            'Músculo: ${item.primaryMuscle.toUpperCase()} • ${item.individualSets.length} series',
+                                            style: GoogleFonts.rajdhani(
+                                              fontSize: 11,
+                                              color: Colors.white60,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                                      tooltip: 'Quitar',
-                                      onPressed: () => _removeExercise(index),
+                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                                      tooltip: 'Eliminar ejercicio',
+                                      onPressed: () => _removeExercise(exIdx),
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 12),
+
+                                // TABLA DE SERIES PERSONALIZADAS
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0A0F1D),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.white10),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // HEADER DE LA TABLA
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF1E293B).withOpacity(0.6),
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 48,
+                                              child: Text(
+                                                'SERIE',
+                                                style: GoogleFonts.orbitron(
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: SystemTheme.neonCyan,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Center(
+                                                child: Text(
+                                                  'PESO (KG)',
+                                                  style: GoogleFonts.orbitron(
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white70,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Center(
+                                                child: Text(
+                                                  'REPS',
+                                                  style: GoogleFonts.orbitron(
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white70,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 86,
+                                              child: Center(
+                                                child: Text(
+                                                  'DESCANSO',
+                                                  style: GoogleFonts.orbitron(
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white70,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 36),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // FILAS DE CADA SERIE
+                                      ...item.individualSets.asMap().entries.map((entry) {
+                                        final setIdx = entry.key;
+                                        final routineSet = entry.value;
+
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              top: BorderSide(color: Colors.white.withOpacity(0.05)),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              // NÚMERO DE SERIE
+                                              SizedBox(
+                                                width: 48,
+                                                child: Text(
+                                                  '#${routineSet.setNumber}',
+                                                  style: GoogleFonts.orbitron(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: SystemTheme.spartanGold,
+                                                  ),
+                                                ),
+                                              ),
+
+                                              // PESO EDITABLE
+                                              Expanded(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  child: _buildInlineNumberInput(
+                                                    initialValue: routineSet.weightKg.toStringAsFixed(
+                                                        routineSet.weightKg.truncateToDouble() == routineSet.weightKg
+                                                            ? 0
+                                                            : 1),
+                                                    onChanged: (val) {
+                                                      final parsed = double.tryParse(val);
+                                                      if (parsed != null && parsed >= 0) {
+                                                        _updateSetWeight(exIdx, setIdx, parsed);
+                                                      }
+                                                    },
+                                                    suffix: 'kg',
+                                                  ),
+                                                ),
+                                              ),
+
+                                              // REPETICIONES EDITABLES
+                                              Expanded(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  child: _buildInlineNumberInput(
+                                                    initialValue: routineSet.reps.toString(),
+                                                    onChanged: (val) {
+                                                      final parsed = int.tryParse(val);
+                                                      if (parsed != null && parsed > 0) {
+                                                        _updateSetReps(exIdx, setIdx, parsed);
+                                                      }
+                                                    },
+                                                    suffix: 'reps',
+                                                  ),
+                                                ),
+                                              ),
+
+                                              // DESCANSO EDITABLE (DROPDOWN O DIALOG)
+                                              SizedBox(
+                                                width: 86,
+                                                child: _buildInlineRestSelector(
+                                                  currentSeconds: routineSet.restSeconds,
+                                                  onChanged: (val) => _updateSetRest(exIdx, setIdx, val),
+                                                ),
+                                              ),
+
+                                              // BOTÓN BORRAR SERIE
+                                              SizedBox(
+                                                width: 36,
+                                                child: IconButton(
+                                                  icon: const Icon(Icons.remove_circle_outline,
+                                                      color: Colors.redAccent, size: 18),
+                                                  tooltip: 'Quitar serie',
+                                                  onPressed: () => _removeSetFromExercise(exIdx, setIdx),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                ),
+
                                 const SizedBox(height: 10),
-                                // CONFIGURACIÓN: SERIES, PESO, REPS, DESCANSO
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 8,
-                                  children: [
-                                    // SERIES
-                                    _buildNumberField(
-                                      label: 'Series',
-                                      value: item.sets.toString(),
-                                      onChanged: (val) {
-                                        final parsed = int.tryParse(val);
-                                        if (parsed != null && parsed > 0) {
-                                          setState(() {
-                                            _selectedExercises[index] = item.copyWith(sets: parsed);
-                                          });
-                                        }
-                                      },
+
+                                // BOTÓN "+ AÑADIR SERIE"
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: SystemTheme.neonCyan,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     ),
-                                    // PESO OBJETIVO
-                                    _buildNumberField(
-                                      label: 'Peso (kg)',
-                                      value: item.targetWeightKg.toStringAsFixed(0),
-                                      onChanged: (val) {
-                                        final parsed = double.tryParse(val);
-                                        if (parsed != null && parsed >= 0) {
-                                          setState(() {
-                                            _selectedExercises[index] = item.copyWith(targetWeightKg: parsed);
-                                          });
-                                        }
-                                      },
+                                    icon: const Icon(Icons.add, size: 16),
+                                    label: Text(
+                                      '+ Añadir Serie',
+                                      style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold),
                                     ),
-                                    // REPETICIONES
-                                    _buildNumberField(
-                                      label: 'Reps',
-                                      value: item.targetReps.toString(),
-                                      onChanged: (val) {
-                                        final parsed = int.tryParse(val);
-                                        if (parsed != null && parsed > 0) {
-                                          setState(() {
-                                            _selectedExercises[index] = item.copyWith(targetReps: parsed);
-                                          });
-                                        }
-                                      },
-                                    ),
-                                    // TIEMPO DE DESCANSO
-                                    _buildRestPicker(
-                                      label: 'Descanso',
-                                      currentSeconds: item.restSeconds,
-                                      onChanged: (val) {
-                                        setState(() {
-                                          _selectedExercises[index] = item.copyWith(restSeconds: val);
-                                        });
-                                      },
-                                    ),
-                                  ],
+                                    onPressed: () => _addSetToExercise(exIdx),
+                                  ),
                                 ),
                               ],
                             ),
@@ -457,9 +758,9 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
             // FOOTER: BOTÓN GUARDAR
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F172A),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
                 border: Border(
                   top: BorderSide(color: Colors.white12),
                 ),
@@ -505,75 +806,75 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
     );
   }
 
-  Widget _buildNumberField({
-    required String label,
-    required String value,
+  Widget _buildInlineNumberInput({
+    required String initialValue,
     required ValueChanged<String> onChanged,
+    required String suffix,
   }) {
     return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      height: 36,
       decoration: BoxDecoration(
-        color: const Color(0xFF0A0F1D),
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.white12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.rajdhani(fontSize: 10, color: Colors.white60)),
-          TextFormField(
-            initialValue: value,
-            keyboardType: TextInputType.number,
-            style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
-            decoration: const InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.zero,
-              border: InputBorder.none,
-            ),
-            onChanged: onChanged,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Center(
+        child: TextFormField(
+          initialValue: initialValue,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            border: InputBorder.none,
+            suffixText: suffix,
+            suffixStyle: GoogleFonts.rajdhani(fontSize: 10, color: Colors.white38),
           ),
-        ],
+          onChanged: onChanged,
+        ),
       ),
     );
   }
 
-  Widget _buildRestPicker({
-    required String label,
+  Widget _buildInlineRestSelector({
     required int currentSeconds,
     required ValueChanged<int> onChanged,
   }) {
+    final validValues = [30, 45, 60, 90, 120, 150, 180];
+    final value = validValues.contains(currentSeconds) ? currentSeconds : 90;
+
     return Container(
-      width: 110,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      height: 36,
       decoration: BoxDecoration(
-        color: const Color(0xFF0A0F1D),
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.white12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: GoogleFonts.rajdhani(fontSize: 10, color: Colors.white60)),
-          DropdownButton<int>(
-            value: [60, 90, 120, 150, 180].contains(currentSeconds) ? currentSeconds : 90,
-            isDense: true,
-            isExpanded: true,
-            dropdownColor: const Color(0xFF131C31),
-            underline: const SizedBox(),
-            style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: SystemTheme.neonCyan),
-            items: const [
-              DropdownMenuItem(value: 60, child: Text('1:00 min')),
-              DropdownMenuItem(value: 90, child: Text('1:30 min')),
-              DropdownMenuItem(value: 120, child: Text('2:00 min')),
-              DropdownMenuItem(value: 150, child: Text('2:30 min')),
-              DropdownMenuItem(value: 180, child: Text('3:00 min')),
-            ],
-            onChanged: (v) {
-              if (v != null) onChanged(v);
-            },
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Center(
+        child: DropdownButton<int>(
+          value: value,
+          isDense: true,
+          isExpanded: true,
+          underline: const SizedBox(),
+          dropdownColor: const Color(0xFF131C31),
+          style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold, color: SystemTheme.neonCyan),
+          icon: const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 16),
+          items: const [
+            DropdownMenuItem(value: 30, child: Text('30s')),
+            DropdownMenuItem(value: 45, child: Text('45s')),
+            DropdownMenuItem(value: 60, child: Text('60s')),
+            DropdownMenuItem(value: 90, child: Text('90s')),
+            DropdownMenuItem(value: 120, child: Text('2m')),
+            DropdownMenuItem(value: 150, child: Text('2.5m')),
+            DropdownMenuItem(value: 180, child: Text('3m')),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
       ),
     );
   }

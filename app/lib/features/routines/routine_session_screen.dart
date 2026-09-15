@@ -56,8 +56,9 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
 
   void _resetCurrentSetValues() {
     final current = _currentRoutineExercise;
-    _actualReps = current.targetReps;
-    _actualWeight = current.targetWeightKg;
+    final setConfig = current.getSet(_currentSet);
+    _actualReps = setConfig.reps;
+    _actualWeight = setConfig.weightKg;
     _addedBonusRest = 0;
     _dropsetDrops = 0;
   }
@@ -122,7 +123,8 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
     _totalSetsCompleted += 1;
 
     // Iniciar cuenta atrás del temporizador de descanso
-    final totalRest = currentEx.restSeconds + _addedBonusRest;
+    final setConfig = currentEx.getSet(_currentSet);
+    final totalRest = setConfig.restSeconds + _addedBonusRest;
     setState(() {
       _isReviewingSet = false;
       _isResting = true;
@@ -130,6 +132,128 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
     });
 
     _startRestTimer();
+  }
+
+  void _showRoutineOverviewModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F172A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: SystemTheme.neonCyan, width: 1.2),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'TABLA COMPLETA DE LA RUTINA',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.orbitron(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: SystemTheme.neonCyan,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ...widget.routine.exercises.asMap().entries.map((entry) {
+                    final exIndex = entry.key;
+                    final ex = entry.value;
+                    final isCurrentEx = exIndex == _exerciseIndex;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF131C31),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isCurrentEx ? SystemTheme.neonCyan : Colors.white12,
+                          width: isCurrentEx ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '#${exIndex + 1} ${ex.exerciseName}',
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: isCurrentEx ? SystemTheme.neonCyan : Colors.white,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                ex.primaryMuscle.toUpperCase(),
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 11,
+                                  color: Colors.white54,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ...ex.individualSets.map((s) {
+                            final isDone = exIndex < _exerciseIndex || (isCurrentEx && s.setNumber < _currentSet);
+                            final isRunning = isCurrentEx && s.setNumber == _currentSet;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Serie ${s.setNumber}: ${s.weightKg} kg x ${s.reps} reps (pausa ${s.restSeconds}s)',
+                                    style: GoogleFonts.rajdhani(
+                                      fontSize: 13,
+                                      color: isRunning ? SystemTheme.neonCyan : (isDone ? Colors.greenAccent : Colors.white70),
+                                      fontWeight: isRunning ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                  if (isDone)
+                                    const Icon(Icons.check_circle, color: Colors.greenAccent, size: 14)
+                                  else if (isRunning)
+                                    Text('EN CURSO', style: GoogleFonts.orbitron(color: SystemTheme.neonCyan, fontSize: 9, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _startRestTimer() {
@@ -249,6 +373,11 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.table_chart_outlined, color: SystemTheme.neonCyan),
+            tooltip: 'Ver tabla de la rutina',
+            onPressed: () => _showRoutineOverviewModal(context),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
@@ -293,12 +422,12 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
     );
   }
 
-  /// ESTADO 1: Realizando la serie
+  /// ESTADO 1: Realizando la serie con tabla de series
   Widget _buildActiveSetView() {
     final current = _currentRoutineExercise;
+    final setConfig = current.getSet(_currentSet);
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -317,64 +446,71 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         Text(
           current.exerciseName,
           textAlign: TextAlign.center,
           style: GoogleFonts.orbitron(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           'MÚSCULO: ${current.primaryMuscle.toUpperCase()}',
           style: GoogleFonts.rajdhani(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             color: Colors.white60,
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
 
-        // TARJETA DE PESO Y REPETICIONES OBJETIVO
+        // TARJETA DE PESO Y REPETICIONES OBJETIVO DE ESTA SERIE ESPECÍFICA
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildStatBox(
               label: 'PESO OBJETIVO',
-              value: '${current.targetWeightKg.toStringAsFixed(0)} kg',
+              value: '${setConfig.weightKg.toStringAsFixed(setConfig.weightKg.truncateToDouble() == setConfig.weightKg ? 0 : 1)} kg',
               icon: Icons.fitness_center,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             _buildStatBox(
               label: 'REPETICIONES',
-              value: '${current.targetReps} reps',
+              value: '${setConfig.reps} reps',
               icon: Icons.repeat,
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.timer_outlined, color: Colors.white54, size: 16),
+            const Icon(Icons.timer_outlined, color: Colors.white54, size: 15),
             const SizedBox(width: 6),
             Text(
-              'Descanso programado: ${_formatSeconds(current.restSeconds)} min',
-              style: GoogleFonts.rajdhani(fontSize: 13, color: Colors.white54),
+              'Descanso programado: ${_formatSeconds(setConfig.restSeconds)} min',
+              style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white54),
             ),
           ],
         ),
 
-        const Spacer(),
+        const SizedBox(height: 14),
+
+        // TABLA VISUAL DE TODAS LAS SERIES DEL EJERCICIO
+        Expanded(
+          child: _buildSetsTable(current),
+        ),
+
+        const SizedBox(height: 10),
 
         // BOTÓN: TERMINAR SERIE
         SizedBox(
           width: double.infinity,
-          height: 60,
+          height: 56,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: SystemTheme.neonCyan,
@@ -387,11 +523,11 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle_outline, size: 26),
+                const Icon(Icons.check_circle_outline, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   'TERMINAR SERIE',
-                  style: GoogleFonts.orbitron(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -401,10 +537,160 @@ class _RoutineSessionScreenState extends State<RoutineSessionScreen> {
     );
   }
 
+  Widget _buildSetsTable(RoutineExercise current) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.25)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B).withOpacity(0.8),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 44,
+                  child: Text('SERIE', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: SystemTheme.neonCyan)),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text('PESO', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white70)),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text('REPS', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white70)),
+                  ),
+                ),
+                SizedBox(
+                  width: 58,
+                  child: Center(
+                    child: Text('PAUSA', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white70)),
+                  ),
+                ),
+                SizedBox(
+                  width: 78,
+                  child: Center(
+                    child: Text('ESTADO', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white70)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: current.individualSets.length,
+              itemBuilder: (context, idx) {
+                final s = current.individualSets[idx];
+                final isCurrent = s.setNumber == _currentSet;
+                final isDone = s.setNumber < _currentSet;
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isCurrent ? SystemTheme.neonCyan.withOpacity(0.12) : Colors.transparent,
+                    border: Border(
+                      top: BorderSide(color: Colors.white.withOpacity(0.05)),
+                      left: isCurrent ? const BorderSide(color: SystemTheme.neonCyan, width: 3.5) : BorderSide.none,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 44,
+                        child: Text(
+                          '#${s.setNumber}',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isCurrent ? SystemTheme.neonCyan : (isDone ? Colors.greenAccent : Colors.white60),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            '${s.weightKg.toStringAsFixed(s.weightKg.truncateToDouble() == s.weightKg ? 0 : 1)} kg',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isCurrent ? Colors.white : Colors.white70,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            '${s.reps}',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isCurrent ? Colors.white : Colors.white70,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 58,
+                        child: Center(
+                          child: Text(
+                            '${s.restSeconds}s',
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 11,
+                              color: Colors.white60,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 78,
+                        child: Center(
+                          child: isDone
+                              ? const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle, color: Colors.greenAccent, size: 14),
+                                    SizedBox(width: 4),
+                                    Text('LISTO', style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ],
+                                )
+                              : isCurrent
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: SystemTheme.neonCyan.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(color: SystemTheme.neonCyan, width: 1),
+                                      ),
+                                      child: Text('ACTUAL', style: GoogleFonts.orbitron(color: SystemTheme.neonCyan, fontSize: 8.5, fontWeight: FontWeight.bold)),
+                                    )
+                                  : Text('PENDIENTE', style: GoogleFonts.rajdhani(color: Colors.white30, fontSize: 10)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// ESTADO 2: Ajuste de repeticiones reales, peso y botón +15s
   Widget _buildReviewingView() {
     final current = _currentRoutineExercise;
-    final totalRestPreview = current.restSeconds + _addedBonusRest;
+    final setConfig = current.getSet(_currentSet);
+    final totalRestPreview = setConfig.restSeconds + _addedBonusRest;
 
     return SingleChildScrollView(
       child: Column(

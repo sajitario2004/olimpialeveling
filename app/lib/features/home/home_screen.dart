@@ -26,16 +26,24 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentTabIndex = 1; // Pestaña del medio (Principal) por defecto
+  late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _currentTabIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final game = Provider.of<GameProvider>(context, listen: false);
       if (game.player == null) {
         game.ensureGameStateLoaded();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -293,8 +301,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          body: IndexedStack(
-            index: _currentTabIndex,
+          body: PageView(
+            controller: _pageController,
+            onPageChanged: (idx) {
+              setState(() => _currentTabIndex = idx);
+            },
             children: [
               const ExerciseLibraryScreen(),
               _buildMainBodyTab(context, game),
@@ -310,7 +321,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: BottomNavigationBar(
               currentIndex: _currentTabIndex,
-              onTap: (idx) => setState(() => _currentTabIndex = idx),
+              onTap: (idx) {
+                setState(() => _currentTabIndex = idx);
+                _pageController.animateToPage(
+                  idx,
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeInOut,
+                );
+              },
               backgroundColor: const Color(0xFF0C1322),
               selectedItemColor: SystemTheme.neonCyan,
               unselectedItemColor: Colors.white38,

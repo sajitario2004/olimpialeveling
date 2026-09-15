@@ -13,6 +13,7 @@ import '../models/player.dart';
 import '../models/rank.dart';
 import '../models/user.dart';
 import '../models/routine.dart';
+import '../core/time/network_time_service.dart';
 
 class LevelUpEvent {
   final String muscleName;
@@ -99,26 +100,39 @@ class GameProvider extends ChangeNotifier {
         hasCompletedSupremeTrial: _player?.hasCompletedSupremeTrial ?? false,
       );
 
-  /// Indica si el cazador se encuentra en un nivel que requiere prueba física semanal para ascender.
+  /// Indica si el cazador se encuentra en un nivel que requiere prueba física semanal (Superentrenamiento) para ascender.
   /// En el nivel 100, se requiere la Prueba Suprema para desbloquear God of Olimpus.
   bool get isAtTrialLevel {
+    if (_player == null) return false;
     if (hunterLevel >= 100) {
-      return !(_player?.hasCompletedSupremeTrial ?? false);
+      return !_player!.hasCompletedSupremeTrial;
     }
-    return RankTier.isTrialLevel(hunterLevel);
+    if (RankTier.isTrialLevel(hunterLevel)) {
+      return _player!.lastCompletedTrialLevel < hunterLevel;
+    }
+    return false;
   }
 
   /// Indica si el jugador ha ascendido formalmente a God of Olimpus tras superar la prueba suprema
   bool get isGodOfOlimpusUnlocked =>
       hunterLevel >= 100 && (_player?.hasCompletedSupremeTrial ?? false);
 
-  /// Completa la prueba suprema del nivel 100 coronando al cazador como GOD OF OLIMPUS
-  Future<void> completeSupremeAscensionTrial() async {
+  /// Completa el superentrenamiento / prueba de ascenso de rango
+  Future<void> completeAscensionTrial([int? level]) async {
     if (_player == null) return;
-    _player!.hasCompletedSupremeTrial = true;
+    final trialLvl = level ?? hunterLevel;
+    _player!.lastCompletedTrialLevel = trialLvl;
+    if (trialLvl >= 100) {
+      _player!.hasCompletedSupremeTrial = true;
+    }
     await _db.updatePlayer(_player!);
     AudioService.instance.playLevelUp();
     notifyListeners();
+  }
+
+  /// Completa la prueba suprema del nivel 100 coronando al cazador como GOD OF OLIMPUS
+  Future<void> completeSupremeAscensionTrial() async {
+    await completeAscensionTrial(100);
   }
 
   void clearPrAlert() {
@@ -241,7 +255,7 @@ class GameProvider extends ChangeNotifier {
         _exercises = await _db.getAllExercises();
       }
       if (_dailyQuests.isEmpty) {
-        final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        final todayStr = await NetworkTimeService.getTodayDateString();
         _dailyQuests = await _db.getDailyQuestsForDate(todayStr);
         if (_dailyQuests.isEmpty) {
           await _handleMidnightCycle(todayStr);
@@ -452,6 +466,11 @@ class GameProvider extends ChangeNotifier {
     bool leveledUp = false;
 
     while (muscle.currentXp >= muscle.xpForNextLevel) {
+      if (isAtTrialLevel) {
+        // Bloqueo estricto: no se puede subir de nivel si no se ha completado el superentrenamiento
+        muscle.currentXp = (muscle.xpForNextLevel - 0.1).clamp(0.0, double.infinity);
+        break;
+      }
       muscle.currentXp -= muscle.xpForNextLevel;
       muscle.level += 1;
       _player!.totalLevel += 1;
@@ -610,12 +629,20 @@ class GameProvider extends ChangeNotifier {
   Future<void> refreshWorkoutLogs() async {
     try {
       _workoutLogs = await _db.getWorkoutLogs(limit: 50);
-      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final todayStr = await NetworkTimeService.getTodayDateString();
       _todayVolume = await _db.getTodayVolume(todayStr);
       notifyListeners();
     } catch (e) {
       debugPrint('Error refreshing workout logs: $e');
     }
+  }
+
+  /// Comprueba activamente si se ha producido el cambio de día a las 00:00 por hora de red.
+  Future<void> checkDailyReset() async {
+    final todayStr = await NetworkTimeService.getTodayDateString();
+    await _handleMidnightCycle(todayStr);
+    await refreshWorkoutLogs();
+    notifyListeners();
   }
 
   // ==================== MÉTODOS DE AUTENTICACIÓN ====================
@@ -772,16 +799,21 @@ class GameProvider extends ChangeNotifier {
 
   /// Actualiza nombre de usuario, nombre de cazador y foto/avatar de perfil.
   Future<bool> updateProfile({
-    required String username,
-    required String hunterName,
+    String? username,
+    String? hunterName,
     String? avatarUrl,
+    bool clearAvatar = false,
   }) async {
     if (_currentUser == null) return false;
+    final finalUsername = (username != null && username.isNotEmpty) ? username : _currentUser!.username;
+    final finalHunterName = (hunterName != null && hunterName.isNotEmpty) ? hunterName : _currentUser!.hunterName;
+    final finalAvatar = clearAvatar ? null : (avatarUrl ?? _currentUser!.avatarUrl);
+
     await _db.updateUserProfile(
       userId: _currentUser!.id,
-      username: username,
-      hunterName: hunterName,
-      avatarUrl: avatarUrl,
+      username: finalUsername,
+      hunterName: finalHunterName,
+      avatarUrl: finalAvatar,
     );
     _currentUser = await _db.getUserById(_currentUser!.id);
     notifyListeners();

@@ -1,11 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/system_theme.dart';
 import '../../models/routine.dart';
 import '../../providers/game_provider.dart';
 import 'widgets/rank_pyramid_dialog.dart';
+import 'widgets/avatar_adjust_dialog.dart';
 import '../routines/routine_editor_dialog.dart';
 import '../routines/routine_session_screen.dart';
 import '../dungeons/rank_dungeon_sheet.dart';
@@ -16,6 +19,7 @@ class HunterProfileScreen extends StatelessWidget {
   const HunterProfileScreen({super.key});
 
   void _openEditPersonalRecordsDialog(BuildContext context, GameProvider game) {
+    String prSearchQuery = '';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -28,93 +32,140 @@ class HunterProfileScreen extends StatelessWidget {
           children: [
             const Icon(Icons.emoji_events, color: SystemTheme.spartanGold, size: 22),
             const SizedBox(width: 8),
-            Text(
-              'MODIFICAR RÉCORDS (PR)',
-              style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+            Expanded(
+              child: Text(
+                'MODIFICAR RÉCORDS PERSONALES',
+                style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
             ),
           ],
         ),
-        content: SizedBox(
-          width: 460,
-          child: FutureBuilder<Map<String, double>>(
-            future: game.getAllPersonalRecords(),
-            builder: (context, snapshot) {
-              final prMap = snapshot.data ?? {};
-              return SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: game.exercises.map((exercise) {
-                    final currentPr = prMap[exercise.id] ?? 0.0;
-                    final ctrl = TextEditingController(
-                      text: currentPr > 0 ? currentPr.toStringAsFixed(1) : '',
-                    );
+        content: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return SizedBox(
+              width: 480,
+              height: 520,
+              child: FutureBuilder<Map<String, double>>(
+                future: game.getAllPersonalRecords(),
+                builder: (context, snapshot) {
+                  final prMap = snapshot.data ?? {};
+                  final searchFilter = prSearchQuery.toLowerCase();
+                  final filteredExercises = game.exercises.where((e) {
+                    return e.name.toLowerCase().contains(searchFilter) ||
+                        e.primaryMuscle.toLowerCase().contains(searchFilter);
+                  }).toList();
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  exercise.name,
-                                  style: GoogleFonts.orbitron(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  'Actual: ${currentPr > 0 ? "${currentPr.toStringAsFixed(1)} kg" : "Sin récord"}',
-                                  style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white60),
-                                ),
-                              ],
-                            ),
+                  return Column(
+                    children: [
+                      // Search bar with magnifying glass (lupa)
+                      TextField(
+                        onChanged: (val) {
+                          setDialogState(() {
+                            prSearchQuery = val;
+                          });
+                        },
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: 'Buscar ejercicio por nombre o músculo...',
+                          hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                          prefixIcon: const Icon(Icons.search, color: SystemTheme.neonCyan, size: 18),
+                          filled: true,
+                          fillColor: const Color(0xFF1E293B),
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: SystemTheme.neonCyan.withOpacity(0.3)),
                           ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 80,
-                            child: TextField(
-                              controller: ctrl,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: const TextStyle(color: Colors.white, fontSize: 13),
-                              decoration: InputDecoration(
-                                isDense: true,
-                                hintText: '0.0 kg',
-                                hintStyle: const TextStyle(color: Colors.white24, fontSize: 11),
-                                filled: true,
-                                fillColor: const Color(0xFF1E293B),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            icon: const Icon(Icons.save, color: SystemTheme.spartanGold, size: 20),
-                            tooltip: 'Guardar PR',
-                            onPressed: () async {
-                              final newWeight = double.tryParse(ctrl.text.trim()) ?? 0.0;
-                              await game.devSetPersonalRecord(exercise.id, newWeight);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('PR de ${exercise.name} fijado en $newWeight kg'),
-                                    backgroundColor: SystemTheme.hunterGreen,
-                                    duration: const Duration(seconds: 1),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        ],
+                        ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              );
-            },
-          ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: filteredExercises.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'No se encontraron ejercicios.',
+                                  style: GoogleFonts.rajdhani(color: Colors.white54, fontSize: 13),
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: filteredExercises.length,
+                                itemBuilder: (context, index) {
+                                  final exercise = filteredExercises[index];
+                                  final currentPr = prMap[exercise.id] ?? 0.0;
+                                  final ctrl = TextEditingController(
+                                    text: currentPr > 0 ? currentPr.toStringAsFixed(1) : '',
+                                  );
+
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 6),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                exercise.name,
+                                                style: GoogleFonts.orbitron(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Actual: ${currentPr > 0 ? "${currentPr.toStringAsFixed(1)} kg" : "Sin récord"}',
+                                                style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white60),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: 80,
+                                          child: TextField(
+                                            controller: ctrl,
+                                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                                            decoration: InputDecoration(
+                                              isDense: true,
+                                              hintText: '0.0 kg',
+                                              hintStyle: const TextStyle(color: Colors.white24, fontSize: 11),
+                                              filled: true,
+                                              fillColor: const Color(0xFF1E293B),
+                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        IconButton(
+                                          icon: const Icon(Icons.save, color: SystemTheme.spartanGold, size: 20),
+                                          tooltip: 'Guardar Récord',
+                                          onPressed: () async {
+                                            final newWeight = double.tryParse(ctrl.text.trim()) ?? 0.0;
+                                            await game.devSetPersonalRecord(exercise.id, newWeight);
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Récord de ${exercise.name} fijado en $newWeight kg'),
+                                                  backgroundColor: SystemTheme.hunterGreen,
+                                                  duration: const Duration(seconds: 1),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
         ),
         actions: [
           TextButton(
@@ -248,11 +299,70 @@ class HunterProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildAvatarWidget(String? path, {double? width, double? height}) {
+    if (path != null && path.trim().isNotEmpty) {
+      final file = File(path);
+      if (file.existsSync()) {
+        return Image.file(file, width: width, height: height, fit: BoxFit.cover);
+      }
+      if (path.startsWith('http://') || path.startsWith('https://')) {
+        return Image.network(
+          path,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Image.asset('assets/images/default_avatar.png', width: width, height: height, fit: BoxFit.cover),
+        );
+      }
+    }
+    return Image.asset('assets/images/default_avatar.png', width: width, height: height, fit: BoxFit.cover);
+  }
+
+  Future<void> _pickAndAdjustAvatar(BuildContext context, GameProvider game) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 90,
+      );
+      if (picked == null) return;
+
+      if (!context.mounted) return;
+      final String? savedPath = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AvatarAdjustDialog(imageFile: File(picked.path)),
+      );
+
+      if (savedPath != null && context.mounted) {
+        await game.updateProfile(avatarUrl: savedPath);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Foto de perfil actualizada con éxito.', style: GoogleFonts.orbitron(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+            backgroundColor: SystemTheme.neonCyan,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar imagen: $e'),
+            backgroundColor: SystemTheme.dangerRed,
+          ),
+        );
+      }
+    }
+  }
+
   void _openEditProfileDialog(BuildContext context, GameProvider game) {
     final user = game.currentUser;
     final usernameCtrl = TextEditingController(text: user?.username ?? '');
     final hunterNameCtrl = TextEditingController(text: user?.hunterName ?? '');
-    final avatarUrlCtrl = TextEditingController(text: user?.avatarUrl ?? '');
+    String? selectedAvatarPath = user?.avatarUrl;
     final passwordCtrl = TextEditingController();
 
     showDialog(
@@ -305,21 +415,77 @@ class HunterProfileScreen extends StatelessWidget {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text('Foto / Avatar de Perfil (URL o icono)', style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12)),
-                  const SizedBox(height: 4),
-                  TextField(
-                    controller: avatarUrlCtrl,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'https://ejemplo.com/avatar.jpg',
-                      hintStyle: const TextStyle(color: Colors.white24, fontSize: 11),
-                      filled: true,
-                      fillColor: const Color(0xFF1E293B),
-                      isDense: true,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
+                  const SizedBox(height: 14),
+
+                  // FOTO / AVATAR DE PERFIL (SUBIR DE GALERÍA Y AJUSTAR)
+                  Text('Foto de Perfil', style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: SystemTheme.neonCyan, width: 1.8),
+                        ),
+                        child: ClipOval(
+                          child: _buildAvatarWidget(selectedAvatarPath, width: 48, height: 48),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1E293B),
+                            foregroundColor: SystemTheme.neonCyan,
+                            side: const BorderSide(color: SystemTheme.neonCyan, width: 1.2),
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          icon: const Icon(Icons.photo_library, size: 18),
+                          label: Text(
+                            selectedAvatarPath != null ? 'Cambiar Foto' : 'Subir de Galería',
+                            style: GoogleFonts.orbitron(fontSize: 10.5, fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () async {
+                            final picker = ImagePicker();
+                            final picked = await picker.pickImage(
+                              source: ImageSource.gallery,
+                              maxWidth: 1200,
+                              maxHeight: 1200,
+                              imageQuality: 90,
+                            );
+                            if (picked != null && ctx.mounted) {
+                              final savedPath = await showDialog<String>(
+                                context: ctx,
+                                barrierDismissible: false,
+                                builder: (_) => AvatarAdjustDialog(imageFile: File(picked.path)),
+                              );
+                              if (savedPath != null) {
+                                setModalState(() {
+                                  selectedAvatarPath = savedPath;
+                                });
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                      if (selectedAvatarPath != null) ...[
+                        const SizedBox(width: 6),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                          tooltip: 'Quitar foto',
+                          onPressed: () {
+                            setModalState(() {
+                              selectedAvatarPath = null;
+                            });
+                          },
+                        ),
+                      ],
+                    ],
                   ),
+
                   const SizedBox(height: 16),
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 8),
@@ -354,10 +520,9 @@ class HunterProfileScreen extends StatelessWidget {
                 onPressed: () async {
                   final newU = usernameCtrl.text.trim();
                   final newH = hunterNameCtrl.text.trim();
-                  final newA = avatarUrlCtrl.text.trim().isEmpty ? null : avatarUrlCtrl.text.trim();
 
                   if (newU.isNotEmpty) {
-                    await game.updateProfile(username: newU, hunterName: newH, avatarUrl: newA);
+                    await game.updateProfile(username: newU, hunterName: newH, avatarUrl: selectedAvatarPath);
                   }
 
                   if (passwordCtrl.text.trim().length >= 4) {
@@ -425,51 +590,42 @@ class HunterProfileScreen extends StatelessWidget {
                             // FOTO DE PERFIL / AVATAR
                             Stack(
                               children: [
-                                Container(
-                                  width: 68,
-                                  height: 68,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: const Color(0xFF1A2744),
-                                    border: Border.all(
-                                      color: isMaxLevel ? goldColor : SystemTheme.neonCyan,
-                                      width: 2.2,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: (isMaxLevel ? goldColor : SystemTheme.neonCyan).withOpacity(0.3),
-                                        blurRadius: 10,
+                                GestureDetector(
+                                  onTap: () => _pickAndAdjustAvatar(context, game),
+                                  child: Container(
+                                    width: 68,
+                                    height: 68,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: const Color(0xFF1A2744),
+                                      border: Border.all(
+                                        color: isMaxLevel ? goldColor : SystemTheme.neonCyan,
+                                        width: 2.2,
                                       ),
-                                    ],
-                                  ),
-                                  child: ClipOval(
-                                    child: user?.avatarUrl != null && user!.avatarUrl!.startsWith('http')
-                                        ? Image.network(
-                                            user.avatarUrl!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => Image.asset(
-                                              'assets/images/default_avatar.png',
-                                              fit: BoxFit.cover,
-                                            ),
-                                          )
-                                        : Image.asset(
-                                            'assets/images/default_avatar.png',
-                                            fit: BoxFit.cover,
-                                          ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: (isMaxLevel ? goldColor : SystemTheme.neonCyan).withOpacity(0.3),
+                                          blurRadius: 10,
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipOval(
+                                      child: _buildAvatarWidget(user?.avatarUrl, width: 68, height: 68),
+                                    ),
                                   ),
                                 ),
                                 Positioned(
                                   bottom: 0,
                                   right: 0,
                                   child: GestureDetector(
-                                    onTap: () => _openEditProfileDialog(context, game),
+                                    onTap: () => _pickAndAdjustAvatar(context, game),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
                                       decoration: const BoxDecoration(
                                         color: SystemTheme.neonCyan,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.edit, size: 13, color: Colors.black),
+                                      child: const Icon(Icons.photo_camera, size: 13, color: Colors.black),
                                     ),
                                   ),
                                 ),
@@ -768,25 +924,33 @@ class HunterProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // RÉCORDS PERSONALES (PR)
+                  // RÉCORDS PERSONALES
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.emoji_events, color: SystemTheme.spartanGold, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'RÉCORDS PERSONALES (PR)',
-                            style: GoogleFonts.orbitron(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 1.1,
-                            ),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.emoji_events, color: SystemTheme.spartanGold, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'RÉCORDS PERSONALES',
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       if (user?.isDeveloper == true || user?.isAdmin == true)
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
@@ -798,7 +962,7 @@ class HunterProfileScreen extends StatelessWidget {
                           ),
                           icon: const Icon(Icons.edit, size: 14),
                           label: Text(
-                            'MODIFICAR PRs',
+                            'MODIFICAR',
                             style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                           onPressed: () => _openEditPersonalRecordsDialog(context, game),
@@ -827,7 +991,7 @@ class HunterProfileScreen extends StatelessWidget {
                               const Icon(Icons.fitness_center, color: Colors.white30, size: 28),
                               const SizedBox(height: 8),
                               Text(
-                                'Aún no has registrado récords personales (PR).',
+                                'Aún no has registrado récords personales.',
                                 style: GoogleFonts.rajdhani(color: Colors.white60, fontSize: 13),
                               ),
                               Text(

@@ -16,6 +16,7 @@ class Player {
   int restTokens;
   bool isRestDayUsedToday;
   bool hasCompletedSupremeTrial;
+  int lastCompletedTrialLevel;
 
   Player({
     this.id = 'main_hunter',
@@ -33,6 +34,7 @@ class Player {
     this.restTokens = 1,
     this.isRestDayUsedToday = false,
     this.hasCompletedSupremeTrial = false,
+    this.lastCompletedTrialLevel = 0,
   });
 
   RankTier get rank => RankTier.getRankForLevel(
@@ -80,6 +82,7 @@ class Player {
       'rest_tokens': restTokens,
       'is_rest_day_used_today': isRestDayUsedToday ? 1 : 0,
       'has_completed_supreme_trial': hasCompletedSupremeTrial ? 1 : 0,
+      'last_completed_trial_level': lastCompletedTrialLevel,
     };
   }
 
@@ -100,6 +103,7 @@ class Player {
       restTokens: map['rest_tokens'] ?? 1,
       isRestDayUsedToday: (map['is_rest_day_used_today'] == 1 || map['is_rest_day_used_today'] == true),
       hasCompletedSupremeTrial: (map['has_completed_supreme_trial'] == 1 || map['has_completed_supreme_trial'] == true),
+      lastCompletedTrialLevel: map['last_completed_trial_level'] ?? 0,
     );
   }
 }

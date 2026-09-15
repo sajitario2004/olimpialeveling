@@ -402,6 +402,75 @@ class _RankDungeonSheetState extends State<RankDungeonSheet> {
 
                   // Dungeon Exercises List
                   _buildDungeonWorkoutSets(context, game),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SystemTheme.spartanGold,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 8,
+                    ),
+                    icon: const Icon(Icons.fitness_center, color: Colors.black),
+                    label: Text(
+                      'REGISTRAR SUPERENTRENAMIENTO COMPLETADO',
+                      style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.w900),
+                    ),
+                    onPressed: () async {
+                      await game.completeAscensionTrial();
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: const Color(0xFF0F172A),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: const BorderSide(color: SystemTheme.spartanGold, width: 2),
+                            ),
+                            title: Text(
+                              '⚡ ¡SUPERENTRENAMIENTO SUPERADO! ⚡',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.orbitron(
+                                color: SystemTheme.spartanGold,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                              ),
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.workspace_premium, color: SystemTheme.spartanGold, size: 64),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Has superado la prueba de ascenso ante los dioses del Olimpo.\n\n¡La restricción de nivel ha sido desbloqueada!',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.rajdhani(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: SystemTheme.spartanGold,
+                                  foregroundColor: Colors.black,
+                                ),
+                                onPressed: () => Navigator.pop(ctx),
+                                child: Text(
+                                  'CONTINUAR ASCENSIÓN',
+                                  style: GoogleFonts.orbitron(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 ],
 
                 const SizedBox(height: 20),

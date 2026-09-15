@@ -294,23 +294,59 @@ class _BodyCard extends StatelessWidget {
 
     final color = muscle.heatColor;
 
+    if (isSplit) {
+      final podWidth = width * 0.36;
+      return Positioned(
+        left: left,
+        top: top,
+        width: width,
+        height: height,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildAnatomicalPod(muscle, color, podWidth, height),
+            _buildAnatomicalPod(muscle, color, podWidth, height),
+          ],
+        ),
+      );
+    }
+
     return Positioned(
       left: left,
       top: top,
       width: width,
       height: height,
+      child: _buildAnatomicalPod(muscle, color, width, height),
+    );
+  }
+
+  Widget _buildAnatomicalPod(Muscle muscle, Color color, double width, double height) {
+    return SizedBox(
+      width: width,
+      height: height,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
+          splashColor: color.withOpacity(0.4),
+          highlightColor: color.withOpacity(0.2),
           onTap: () => onMuscleTap(muscle),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.28),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withOpacity(0.9), width: 1.2),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  color.withOpacity(0.55),
+                  color.withOpacity(0.25),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: color.withOpacity(0.85),
+                width: 1.4,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: color.withOpacity(0.35),
@@ -318,33 +354,6 @@ class _BodyCard extends StatelessWidget {
                   spreadRadius: 1,
                 ),
               ],
-            ),
-            child: Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: GoogleFonts.rajdhani(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [Shadow(color: Colors.black, blurRadius: 4)],
-                      ),
-                    ),
-                    Text(
-                      'Nv.${muscle.level}',
-                      style: GoogleFonts.orbitron(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w900,
-                        color: color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ),

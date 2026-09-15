@@ -145,6 +145,7 @@ class DatabaseHelper {
     await _addColumnIfNotExists(db, 'players', 'equipped_title', 'TEXT');
     await _addColumnIfNotExists(db, 'players', 'selected_daily_quest_id', 'TEXT');
     await _addColumnIfNotExists(db, 'players', 'has_completed_supreme_trial', 'INTEGER NOT NULL DEFAULT 0');
+    await _addColumnIfNotExists(db, 'players', 'last_completed_trial_level', 'INTEGER NOT NULL DEFAULT 0');
     await _addColumnIfNotExists(db, 'players', 'rest_tokens', 'INTEGER NOT NULL DEFAULT 1');
     await _addColumnIfNotExists(db, 'players', 'is_rest_day_used_today', 'INTEGER NOT NULL DEFAULT 0');
     await _addColumnIfNotExists(db, 'daily_quests', 'is_selected', 'INTEGER NOT NULL DEFAULT 0');

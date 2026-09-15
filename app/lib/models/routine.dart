@@ -1,46 +1,159 @@
 import 'dart:convert';
 
-/// Ejercicio individual configurado dentro de una rutina.
-class RoutineExercise {
-  final String exerciseId;
-  final String exerciseName;
-  final int sets;
-  final double targetWeightKg;
-  final int targetReps;
+/// Configuración de una serie individual dentro de un ejercicio de rutina.
+class RoutineSet {
+  final int setNumber;
+  final double weightKg;
+  final int reps;
   final int restSeconds;
-  final String primaryMuscle;
 
-  const RoutineExercise({
-    required this.exerciseId,
-    required this.exerciseName,
-    this.sets = 3,
-    this.targetWeightKg = 20.0,
-    this.targetReps = 12,
+  const RoutineSet({
+    required this.setNumber,
+    required this.weightKg,
+    required this.reps,
     this.restSeconds = 90,
-    this.primaryMuscle = 'pecho',
   });
 
   Map<String, dynamic> toMap() {
     return {
+      'set_number': setNumber,
+      'weight_kg': weightKg,
+      'reps': reps,
+      'rest_seconds': restSeconds,
+    };
+  }
+
+  factory RoutineSet.fromMap(Map<String, dynamic> map) {
+    return RoutineSet(
+      setNumber: (map['set_number'] as num?)?.toInt() ?? 1,
+      weightKg: (map['weight_kg'] as num?)?.toDouble() ?? 20.0,
+      reps: (map['reps'] as num?)?.toInt() ?? 12,
+      restSeconds: (map['rest_seconds'] as num?)?.toInt() ?? 90,
+    );
+  }
+
+  RoutineSet copyWith({
+    int? setNumber,
+    double? weightKg,
+    int? reps,
+    int? restSeconds,
+  }) {
+    return RoutineSet(
+      setNumber: setNumber ?? this.setNumber,
+      weightKg: weightKg ?? this.weightKg,
+      reps: reps ?? this.reps,
+      restSeconds: restSeconds ?? this.restSeconds,
+    );
+  }
+}
+
+/// Ejercicio individual configurado dentro de una rutina con soporte para series personalizadas.
+class RoutineExercise {
+  final String exerciseId;
+  final String exerciseName;
+  final int _sets;
+  final double _targetWeightKg;
+  final int _targetReps;
+  final int _restSeconds;
+  final String primaryMuscle;
+  final List<RoutineSet> individualSets;
+
+  const RoutineExercise({
+    required this.exerciseId,
+    required this.exerciseName,
+    int sets = 3,
+    double targetWeightKg = 20.0,
+    int targetReps = 12,
+    int restSeconds = 90,
+    this.primaryMuscle = 'pecho',
+    this.individualSets = const [],
+  })  : _sets = sets,
+        _targetWeightKg = targetWeightKg,
+        _targetReps = targetReps,
+        _restSeconds = restSeconds;
+
+  int get sets => individualSets.isNotEmpty ? individualSets.length : _sets;
+  double get targetWeightKg => individualSets.isNotEmpty ? individualSets.first.weightKg : _targetWeightKg;
+  int get targetReps => individualSets.isNotEmpty ? individualSets.first.reps : _targetReps;
+  int get restSeconds => individualSets.isNotEmpty ? individualSets.first.restSeconds : _restSeconds;
+
+  RoutineSet getSet(int setNumber) {
+    if (individualSets.isNotEmpty) {
+      final index = setNumber - 1;
+      if (index >= 0 && index < individualSets.length) {
+        return individualSets[index];
+      }
+    }
+    return RoutineSet(
+      setNumber: setNumber,
+      weightKg: targetWeightKg,
+      reps: targetReps,
+      restSeconds: restSeconds,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    final setsList = individualSets.isNotEmpty
+        ? individualSets
+        : List.generate(
+            sets,
+            (i) => RoutineSet(
+              setNumber: i + 1,
+              weightKg: targetWeightKg,
+              reps: targetReps,
+              restSeconds: restSeconds,
+            ),
+          );
+
+    return {
       'exercise_id': exerciseId,
       'exercise_name': exerciseName,
-      'sets': sets,
-      'target_weight_kg': targetWeightKg,
-      'target_reps': targetReps,
-      'rest_seconds': restSeconds,
+      'sets': setsList.length,
+      'target_weight_kg': setsList.isNotEmpty ? setsList.first.weightKg : targetWeightKg,
+      'target_reps': setsList.isNotEmpty ? setsList.first.reps : targetReps,
+      'rest_seconds': setsList.isNotEmpty ? setsList.first.restSeconds : restSeconds,
       'primary_muscle': primaryMuscle,
+      'individual_sets': setsList.map((s) => s.toMap()).toList(),
     };
   }
 
   factory RoutineExercise.fromMap(Map<String, dynamic> map) {
+    final setsCount = (map['sets'] as num?)?.toInt() ?? 3;
+    final defaultWeight = (map['target_weight_kg'] as num?)?.toDouble() ?? 20.0;
+    final defaultReps = (map['target_reps'] as num?)?.toInt() ?? 12;
+    final defaultRest = (map['rest_seconds'] as num?)?.toInt() ?? 90;
+
+    List<RoutineSet> setsList = [];
+    if (map['individual_sets'] != null) {
+      try {
+        final decodedSets = map['individual_sets'] as List;
+        setsList = decodedSets
+            .map((s) => RoutineSet.fromMap(Map<String, dynamic>.from(s)))
+            .toList();
+      } catch (_) {}
+    }
+
+    if (setsList.isEmpty) {
+      setsList = List.generate(
+        setsCount,
+        (i) => RoutineSet(
+          setNumber: i + 1,
+          weightKg: defaultWeight,
+          reps: defaultReps,
+          restSeconds: defaultRest,
+        ),
+      );
+    }
+
     return RoutineExercise(
       exerciseId: map['exercise_id'] ?? '',
       exerciseName: map['exercise_name'] ?? 'Ejercicio',
-      sets: (map['sets'] as num?)?.toInt() ?? 3,
-      targetWeightKg: (map['target_weight_kg'] as num?)?.toDouble() ?? 20.0,
-      targetReps: (map['target_reps'] as num?)?.toInt() ?? 12,
-      restSeconds: (map['rest_seconds'] as num?)?.toInt() ?? 90,
+      sets: setsList.length,
+      targetWeightKg: setsList.isNotEmpty ? setsList.first.weightKg : defaultWeight,
+      targetReps: setsList.isNotEmpty ? setsList.first.reps : defaultReps,
+      restSeconds: setsList.isNotEmpty ? setsList.first.restSeconds : defaultRest,
       primaryMuscle: map['primary_muscle'] ?? 'pecho',
+      individualSets: setsList,
     );
   }
 
@@ -52,15 +165,18 @@ class RoutineExercise {
     int? targetReps,
     int? restSeconds,
     String? primaryMuscle,
+    List<RoutineSet>? individualSets,
   }) {
+    final newSets = individualSets ?? this.individualSets;
     return RoutineExercise(
       exerciseId: exerciseId ?? this.exerciseId,
       exerciseName: exerciseName ?? this.exerciseName,
-      sets: sets ?? this.sets,
-      targetWeightKg: targetWeightKg ?? this.targetWeightKg,
-      targetReps: targetReps ?? this.targetReps,
-      restSeconds: restSeconds ?? this.restSeconds,
+      sets: newSets.isNotEmpty ? newSets.length : (sets ?? this.sets),
+      targetWeightKg: newSets.isNotEmpty ? newSets.first.weightKg : (targetWeightKg ?? this.targetWeightKg),
+      targetReps: newSets.isNotEmpty ? newSets.first.reps : (targetReps ?? this.targetReps),
+      restSeconds: newSets.isNotEmpty ? newSets.first.restSeconds : (restSeconds ?? this.restSeconds),
       primaryMuscle: primaryMuscle ?? this.primaryMuscle,
+      individualSets: newSets,
     );
   }
 }
