@@ -17,6 +17,7 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    project.plugins.apply("org.jetbrains.kotlin.android")
 }
 
 tasks.register<Delete>("clean") {

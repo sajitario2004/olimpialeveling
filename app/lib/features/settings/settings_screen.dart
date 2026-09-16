@@ -182,9 +182,79 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _switchTile(
                 title: 'Respuesta Háptica / Vibración',
-                subtitle: 'Vibración táctil al registrar series y finalizar descansos',
+                subtitle: 'Vibración táctil al registrar series',
                 value: _hapticsEnabled,
                 onChanged: (v) => setState(() => _hapticsEnabled = v),
+              ),
+              _switchTile(
+                title: 'Vibración al terminar descanso',
+                subtitle: 'Vibración háptica distintiva al finalizar la cuenta del descanso',
+                value: game.restVibrationEnabled,
+                onChanged: (v) => game.setRestVibrationEnabled(v),
+              ),
+              const SizedBox(height: 20),
+
+              // UNIDADES DE MEDIDA Y PANTALLA
+              _sectionHeader('UNIDADES DE MEDIDA & PANTALLA'),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Unidad de Peso',
+                          style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'KG o Libras (LBS) en la app',
+                          style: GoogleFonts.rajdhani(color: Colors.white54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'kg', label: Text('KG')),
+                        ButtonSegment(value: 'lbs', label: Text('LBS')),
+                      ],
+                      selected: {game.unitSystem},
+                      onSelectionChanged: (val) {
+                        if (val.isNotEmpty) {
+                          game.setUnitSystem(val.first);
+                        }
+                      },
+                      style: ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                        backgroundColor: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return SystemTheme.neonCyan.withOpacity(0.3);
+                          }
+                          return const Color(0xFF1E293B);
+                        }),
+                        foregroundColor: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return SystemTheme.neonCyan;
+                          }
+                          return Colors.white70;
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _switchTile(
+                title: 'Mantener pantalla activa (Wake Lock)',
+                subtitle: 'Evita que el dispositivo se apague durante el entrenamiento guiado',
+                value: game.wakeLockEnabled,
+                onChanged: (v) => game.setWakeLockEnabled(v),
               ),
               const SizedBox(height: 20),
 
@@ -336,7 +406,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Footer Version
               Center(
                 child: Text(
-                  'OLIMPIA LEVELING // VERSIÓN 0.0.1 (ALPHA BUILD)',
+                  'OLIMPIA LEVELING // VERSIÓN 0.2.1 (OLYMPIAN BUILD)',
                   style: GoogleFonts.orbitron(
                     fontSize: 10,
                     color: Colors.white38,

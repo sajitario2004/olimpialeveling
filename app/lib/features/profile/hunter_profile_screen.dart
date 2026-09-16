@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/system_theme.dart';
+import '../../core/sharing/routine_share_service.dart';
 import '../../models/routine.dart';
 import '../../providers/game_provider.dart';
 import 'widgets/rank_pyramid_dialog.dart';
@@ -205,6 +206,258 @@ class HunterProfileScreen extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => RoutineEditorDialog(initialRoutine: routine),
+    );
+  }
+
+  void _shareRoutineCode(BuildContext context, Routine routine) async {
+    final code = RoutineShareService.encode(routine);
+    await Clipboard.setData(ClipboardData(text: code));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('¡Código de rutina copiado para compartir por WhatsApp!\n$code', style: GoogleFonts.rajdhani()),
+          backgroundColor: Colors.teal.shade800,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showFullRoutineHistory(BuildContext context, GameProvider game) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: const Color(0xFF090D1A),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(color: SystemTheme.spartanGold.withOpacity(0.6), width: 1.5),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  const Icon(Icons.history_edu, color: SystemTheme.spartanGold, size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'HISTORIAL DE RUTINAS',
+                      style: GoogleFonts.orbitron(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white12),
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: game.getRoutineHistory(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: SystemTheme.spartanGold));
+                  }
+                  final list = snapshot.data ?? [];
+                  if (list.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Aún no has completado ninguna sesión de entrenamiento.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.rajdhani(color: Colors.white54, fontSize: 14),
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final item = list[index];
+                      final duration = item['duration_seconds'] as int? ?? 0;
+                      final min = duration ~/ 60;
+                      final sec = duration % 60;
+                      final dateStr = (item['completed_at'] as String? ?? '').split('T').first;
+                      final name = (item['routine_name'] as String? ?? 'Rutina').toUpperCase();
+                      final xp = (item['total_xp'] as num? ?? 0).toStringAsFixed(0);
+                      final exCount = item['exercises_count'] ?? 0;
+                      final setsCount = item['sets_count'] ?? 0;
+                      final rId = item['routine_id'] as String?;
+
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF131C31),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: GoogleFonts.orbitron(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  '+$xp XP',
+                                  style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$dateStr • ${min}m ${sec}s • $exCount ej. • $setsCount series',
+                              style: GoogleFonts.rajdhani(fontSize: 12, color: Colors.white60),
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: SystemTheme.spartanGold,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                icon: const Icon(Icons.replay, size: 14),
+                                label: Text(
+                                  'REPETIR',
+                                  style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  final matched = game.routines.where((r) => r.id == rId).firstOrNull;
+                                  if (matched != null) {
+                                    _startRoutine(context, matched);
+                                  } else if (game.routines.isNotEmpty) {
+                                    _startRoutine(context, game.routines.first);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openImportRoutineDialog(BuildContext context, GameProvider game) {
+    final textController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF131C31),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: SystemTheme.neonCyan, width: 1.5),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.download, color: SystemTheme.neonCyan, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'IMPORTAR RUTINA',
+              style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pega el código de rutina compartido (ej. OLM:eyJuYW1l...):',
+              style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              maxLines: 3,
+              style: GoogleFonts.rajdhani(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'OLM:eyJuYW1lIjoi...',
+                hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                filled: true,
+                fillColor: const Color(0xFF1E293B),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCELAR', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SystemTheme.neonCyan,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () async {
+              final raw = textController.text.trim();
+              if (raw.isEmpty) return;
+              final routine = RoutineShareService.decode(raw, userId: game.currentUser?.id ?? 'hunter');
+              if (routine == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Código inválido o corrupto. Verifica el formato OLM:...'),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+                return;
+              }
+              await game.saveRoutine(routine);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('¡Rutina "${routine.name}" importada exitosamente con ${routine.exercises.length} ejercicios!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: Text('IMPORTAR', style: GoogleFonts.orbitron(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1097,34 +1350,170 @@ class HunterProfileScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'RUTINAS DE ENTRENAMIENTO',
-                        style: GoogleFonts.orbitron(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1.1,
+                      Flexible(
+                        child: Text(
+                          'RUTINAS DE ENTRENAMIENTO',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1.1,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (routines.isNotEmpty)
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: SystemTheme.neonCyan,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            visualDensity: VisualDensity.compact,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: SystemTheme.neonCyan,
+                              side: const BorderSide(color: SystemTheme.neonCyan),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            icon: const Icon(Icons.file_download_outlined, size: 15),
+                            label: Text('Importar', style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold)),
+                            onPressed: () => _openImportRoutineDialog(context, game),
                           ),
-                          icon: const Icon(Icons.add, size: 16),
-                          label: Text(
-                            'Añadir Rutina',
-                            style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: SystemTheme.neonCyan,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            icon: const Icon(Icons.add, size: 16),
+                            label: Text(
+                              'Añadir',
+                              style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () => _openRoutineEditor(context),
                           ),
-                          onPressed: () => _openRoutineEditor(context),
-                        ),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
+
+                  // TARJETA DE ÚLTIMA RUTINA REALIZADA (Idea 1)
+                  if (game.lastCompletedRoutine != null) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: SystemTheme.spartanGold.withOpacity(0.6), width: 1.2),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.history, color: SystemTheme.spartanGold, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                'ÚLTIMA RUTINA REALIZADA',
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: SystemTheme.spartanGold,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${(game.lastCompletedRoutine!["duration_seconds"] as int? ?? 0) ~/ 60}m ${(game.lastCompletedRoutine!["duration_seconds"] as int? ?? 0) % 60}s',
+                                style: GoogleFonts.orbitron(fontSize: 11, color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  (game.lastCompletedRoutine!['routine_name'] as String? ?? 'Rutina').toUpperCase(),
+                                  style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                '+${(game.lastCompletedRoutine!['total_xp'] as num? ?? 0).toStringAsFixed(0)} XP',
+                                style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Completada el: ${(game.lastCompletedRoutine!['completed_at'] as String? ?? '').split('T').first} • ${game.lastCompletedRoutine!['exercises_count'] ?? 0} ejercicios • ${game.lastCompletedRoutine!['sets_count'] ?? 0} series',
+                            style: GoogleFonts.rajdhani(fontSize: 11, color: Colors.white54),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: SystemTheme.spartanGold.withOpacity(0.2),
+                                    foregroundColor: SystemTheme.spartanGold,
+                                    side: const BorderSide(color: SystemTheme.spartanGold),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  icon: const Icon(Icons.replay, size: 16),
+                                  label: Text(
+                                    'REPETIR RUTINA',
+                                    style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: () {
+                                    final routineId = game.lastCompletedRoutine!['routine_id'] as String?;
+                                    final matched = game.routines.where((r) => r.id == routineId).firstOrNull;
+                                    if (matched != null) {
+                                      _startRoutine(context, matched);
+                                    } else if (game.routines.isNotEmpty) {
+                                      _startRoutine(context, game.routines.first);
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Crea o importa la rutina para volver a entrenarla.')),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 2,
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white70,
+                                    side: const BorderSide(color: Colors.white24),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  icon: const Icon(Icons.history_edu, size: 16),
+                                  label: Text(
+                                    'HISTORIAL',
+                                    style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: () => _showFullRoutineHistory(context, game),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   // SI ESTÁ VACÍO: BOTÓN "+ AÑADIR RUTINA"
                   if (routines.isEmpty)
@@ -1262,6 +1651,19 @@ class HunterProfileScreen extends StatelessWidget {
                                       ),
                                     ),
                                     onPressed: () => _openRoutineEditor(context, routine: routine),
+                                  ),
+                                  const SizedBox(width: 8),
+
+                                  // BOTÓN COMPARTIR CÓDIGO (WHATSAPP)
+                                  IconButton(
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: Colors.teal.withOpacity(0.15),
+                                      side: BorderSide(color: Colors.tealAccent.withOpacity(0.6), width: 1),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    icon: const Icon(Icons.share, color: Colors.tealAccent, size: 16),
+                                    tooltip: 'Compartir código para WhatsApp',
+                                    onPressed: () => _shareRoutineCode(context, routine),
                                   ),
                                   const Spacer(),
 

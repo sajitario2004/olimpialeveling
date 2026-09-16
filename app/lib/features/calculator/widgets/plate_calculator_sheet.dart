@@ -13,17 +13,62 @@ class PlateCalculatorSheet extends StatefulWidget {
 
 class _PlateCalculatorSheetState extends State<PlateCalculatorSheet> {
   late double _targetWeight;
-  final double _barWeight = 20.0;
+  double _barWeight = 20.0;
+  bool _isInverseMode = false; // False: Peso -> Discos, True: Inversa (Discos -> Peso)
 
-  final List<double> _availablePlates = [25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25];
+  // Discos reglamentarios: 20, 10, 5, 2.5, 1.25 (más 25 si peso muy alto)
+  final List<double> _availablePlates = [25.0, 20.0, 10.0, 5.0, 2.5, 1.25];
+
+  // Conteo de discos por lado en modo inverso
+  final Map<double, int> _inversePlatesCount = {
+    20.0: 0,
+    10.0: 0,
+    5.0: 0,
+    2.5: 0,
+    1.25: 0,
+  };
 
   @override
   void initState() {
     super.initState();
     _targetWeight = widget.initialWeight;
+    _syncInverseFromWeight();
+  }
+
+  void _syncInverseFromWeight() {
+    double neededPerSide = (_targetWeight - _barWeight) / 2.0;
+    for (var k in _inversePlatesCount.keys) {
+      _inversePlatesCount[k] = 0;
+    }
+    if (neededPerSide <= 0) return;
+    for (var plate in [20.0, 10.0, 5.0, 2.5, 1.25]) {
+      if (neededPerSide >= plate) {
+        int count = (neededPerSide / plate).floor();
+        _inversePlatesCount[plate] = count;
+        neededPerSide -= count * plate;
+      }
+    }
+  }
+
+  void _syncWeightFromInverse() {
+    double perSide = 0.0;
+    _inversePlatesCount.forEach((plate, count) {
+      perSide += plate * count;
+    });
+    setState(() {
+      _targetWeight = _barWeight + (perSide * 2.0);
+    });
   }
 
   Map<double, int> _calculatePlatesPerSide() {
+    if (_isInverseMode) {
+      final Map<double, int> res = {};
+      _inversePlatesCount.forEach((k, v) {
+        if (v > 0) res[k] = v;
+      });
+      return res;
+    }
+
     double neededPerSide = (_targetWeight - _barWeight) / 2.0;
     if (neededPerSide <= 0) return {};
 
@@ -101,56 +146,223 @@ class _PlateCalculatorSheetState extends State<PlateCalculatorSheet> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: Text(
-                    'Barra: ${_barWeight.toInt()} kg',
-                    style: GoogleFonts.orbitron(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.bold),
+                PopupMenuButton<double>(
+                  initialValue: _barWeight,
+                  onSelected: (val) {
+                    setState(() {
+                      _barWeight = val;
+                      if (_isInverseMode) {
+                        _syncWeightFromInverse();
+                      } else {
+                        _syncInverseFromWeight();
+                      }
+                    });
+                  },
+                  color: const Color(0xFF1E293B),
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(value: 20.0, child: Text('Barra Olímpica (20 kg)', style: TextStyle(color: Colors.white))),
+                    const PopupMenuItem(value: 15.0, child: Text('Barra Técnica (15 kg)', style: TextStyle(color: Colors.white))),
+                    const PopupMenuItem(value: 10.0, child: Text('Barra Z / Corta (10 kg)', style: TextStyle(color: Colors.white))),
+                    const PopupMenuItem(value: 0.0, child: Text('Sin Barra / Máquina (0 kg)', style: TextStyle(color: Colors.white))),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Barra: ${_barWeight.toInt()} kg',
+                          style: GoogleFonts.orbitron(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_drop_down, color: SystemTheme.neonCyan, size: 16),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
-            // Weight selector
+            // Selector de Modo: Directo vs Inverso
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isInverseMode = false;
+                        _syncInverseFromWeight();
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: !_isInverseMode ? SystemTheme.neonCyan.withOpacity(0.2) : const Color(0xFF111827),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: !_isInverseMode ? SystemTheme.neonCyan : Colors.white12,
+                          width: !_isInverseMode ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'PESO → DISCOS',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: !_isInverseMode ? SystemTheme.neonCyan : Colors.white60,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isInverseMode = true;
+                        _syncInverseFromWeight();
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _isInverseMode ? Colors.amber.withOpacity(0.2) : const Color(0xFF111827),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _isInverseMode ? Colors.amber : Colors.white12,
+                          width: _isInverseMode ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'INVERSA: DISCOS → PESO',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: _isInverseMode ? Colors.amber : Colors.white60,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Weight selector & display
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: const Color(0xFF111827),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: SystemTheme.neonCyan.withOpacity(0.3)),
+                border: Border.all(color: _isInverseMode ? Colors.amber.withOpacity(0.4) : SystemTheme.neonCyan.withOpacity(0.3)),
               ),
               child: Column(
                 children: [
-                  Text('PESO TOTAL A LEVANTAR', style: GoogleFonts.rajdhani(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(
+                    _isInverseMode ? 'PESO TOTAL CALCULADO' : 'PESO TOTAL A LEVANTAR',
+                    style: GoogleFonts.rajdhani(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '${_targetWeight.toStringAsFixed(1)} KG',
-                    style: GoogleFonts.orbitron(fontSize: 34, fontWeight: FontWeight.w900, color: SystemTheme.neonCyan),
+                    style: GoogleFonts.orbitron(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: _isInverseMode ? Colors.amber : SystemTheme.neonCyan,
+                    ),
                   ),
                   Text(
                     '(${(weightOnPlates / 2).toStringAsFixed(1)} kg a cada lado de la barra)',
                     style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  if (!_isInverseMode)
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _quickWeightButton(-10),
+                          _quickWeightButton(-2.5),
+                          const SizedBox(width: 16),
+                          _quickWeightButton(2.5),
+                          _quickWeightButton(10),
+                        ],
+                      ),
+                    )
+                  else
+                    // Controles de discos en modo inverso: 20, 10, 5, 2.5, 1.25
+                    Column(
                       children: [
-                        _quickWeightButton(-10),
-                        _quickWeightButton(-2.5),
-                        const SizedBox(width: 16),
-                        _quickWeightButton(2.5),
-                        _quickWeightButton(10),
+                        Text(
+                          'Toca para añadir/quitar discos por lado (20, 10, 5, 2.5, 1.25 kg):',
+                          style: GoogleFonts.rajdhani(fontSize: 11.5, color: Colors.white70),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          alignment: WrapAlignment.center,
+                          children: [20.0, 10.0, 5.0, 2.5, 1.25].map((plate) {
+                            final count = _inversePlatesCount[plate] ?? 0;
+                            final color = _getPlateColor(plate);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E293B),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: color.withOpacity(0.6)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      if (count > 0) {
+                                        setState(() {
+                                          _inversePlatesCount[plate] = count - 1;
+                                          _syncWeightFromInverse();
+                                        });
+                                      }
+                                    },
+                                    child: const Icon(Icons.remove_circle_outline, color: Colors.white60, size: 18),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                                    child: Text(
+                                      '$count x ${plate.toStringAsFixed(plate % 1 == 0 ? 0 : 2)}k',
+                                      style: GoogleFonts.orbitron(fontSize: 10.5, fontWeight: FontWeight.bold, color: color),
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _inversePlatesCount[plate] = count + 1;
+                                        _syncWeightFromInverse();
+                                      });
+                                    },
+                                    child: const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ],
                     ),
-                  ),
                 ],
               ),
             ),

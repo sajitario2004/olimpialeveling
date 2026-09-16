@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/system_theme.dart';
+import '../../models/exercise.dart';
 import '../../providers/game_provider.dart';
 import '../body_map/widgets/muscle_detail_sheet.dart';
 
@@ -16,6 +17,8 @@ class ExerciseLibraryScreen extends StatefulWidget {
 class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
   String _searchQuery = '';
   String _selectedMuscleFilter = 'TODOS';
+  String _selectedEquipmentFilter = 'TODOS';
+  String _selectedGripFilter = 'TODOS';
 
   final List<String> _muscleFilters = [
     'TODOS',
@@ -27,6 +30,44 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
     'PIERNAS',
     'CORE',
   ];
+
+  final List<String> _equipmentFilters = [
+    'TODOS',
+    'BARRA',
+    'MANCUERNA',
+    'POLEA',
+    'MÁQUINA',
+    'CORPORAL',
+  ];
+
+  final List<String> _gripFilters = [
+    'TODOS',
+    'PRONO',
+    'SUPINO',
+    'NEUTRO',
+  ];
+
+  bool _matchesEquipment(Exercise ex) {
+    if (_selectedEquipmentFilter == 'TODOS') return true;
+    final eq = (ex.equipment ?? '').toLowerCase();
+    final name = ex.name.toLowerCase();
+    if (_selectedEquipmentFilter == 'BARRA') return eq.contains('barra') || name.contains('barra');
+    if (_selectedEquipmentFilter == 'MANCUERNA') return eq.contains('mancuerna') || name.contains('mancuerna');
+    if (_selectedEquipmentFilter == 'POLEA') return eq.contains('polea') || name.contains('polea');
+    if (_selectedEquipmentFilter == 'MÁQUINA') return eq.contains('maquina') || eq.contains('máquina') || name.contains('maquina') || name.contains('máquina') || name.contains('prensa');
+    if (_selectedEquipmentFilter == 'CORPORAL') return eq.contains('corporal') || name.contains('dominadas') || name.contains('flexiones') || name.contains('fondos');
+    return true;
+  }
+
+  bool _matchesGrip(Exercise ex) {
+    if (_selectedGripFilter == 'TODOS') return true;
+    final gr = (ex.grip ?? '').toLowerCase();
+    final name = ex.name.toLowerCase();
+    if (_selectedGripFilter == 'PRONO') return gr.contains('prono') || name.contains('prono');
+    if (_selectedGripFilter == 'SUPINO') return gr.contains('supino') || name.contains('supino');
+    if (_selectedGripFilter == 'NEUTRO') return gr.contains('neutro') || name.contains('neutro');
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +82,8 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
               ex.primaryMuscle.toLowerCase().contains(_searchQuery.toLowerCase());
 
           if (!matchesSearch) return false;
+          if (!_matchesEquipment(ex)) return false;
+          if (!_matchesGrip(ex)) return false;
 
           if (_selectedMuscleFilter == 'TODOS') return true;
           if (_selectedMuscleFilter == 'PECHO' && (ex.primaryMuscle == 'pecho' || ex.secondaryMuscle == 'pecho')) return true;
@@ -107,9 +150,9 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                 ),
               ),
 
-              // Filter Chips
+              // Filter Chips 1: Músculos
               SizedBox(
-                height: 40,
+                height: 36,
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
@@ -122,7 +165,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                       label: Text(
                         filter,
                         style: GoogleFonts.orbitron(
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: isSelected ? Colors.black : Colors.white70,
                         ),
@@ -145,7 +188,48 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+
+              // Filter Chips 2: Equipamiento / Barra (Idea 5)
+              SizedBox(
+                height: 32,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _equipmentFilters.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 6),
+                  itemBuilder: (context, index) {
+                    final filter = _equipmentFilters[index];
+                    final isSelected = _selectedEquipmentFilter == filter;
+                    return ChoiceChip(
+                      label: Text(
+                        filter == 'TODOS' ? 'EQUIPO: TODOS' : filter,
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.black : Colors.amber.shade200,
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedColor: Colors.amber,
+                      backgroundColor: const Color(0xFF0F172A),
+                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: isSelected ? Colors.amber : Colors.white12,
+                        ),
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _selectedEquipmentFilter = filter);
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
 
               // Exercise List
               Expanded(
@@ -162,6 +246,8 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                         itemBuilder: (context, index) {
                           final ex = filtered[index];
                           final primaryMuscle = game.getMuscle(ex.primaryMuscle);
+                          final hasThumb = (ex.imageUrl != null && ex.imageUrl!.isNotEmpty) ||
+                              (ex.gifUrl != null && ex.gifUrl!.isNotEmpty);
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -174,36 +260,53 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Image or GIF Preview if present
-                                if ((ex.gifUrl != null && ex.gifUrl!.isNotEmpty) ||
-                                    (ex.imageUrl != null && ex.imageUrl!.isNotEmpty)) ...[
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Container(
-                                      height: 120,
-                                      width: double.infinity,
-                                      color: Colors.black26,
-                                      child: Image.network(
-                                        ex.gifUrl?.isNotEmpty == true ? ex.gifUrl! : ex.imageUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                ],
-
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Expanded(
-                                      child: Text(
-                                        ex.name,
-                                        style: GoogleFonts.orbitron(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                    // Thumbnail de imagen al lado del nombre (Idea del usuario)
+                                    if (hasThumb) ...[
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          width: 44,
+                                          height: 44,
+                                          color: const Color(0xFF1E293B),
+                                          child: Image.network(
+                                            ex.imageUrl?.isNotEmpty == true ? ex.imageUrl! : ex.gifUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => const Icon(
+                                              Icons.fitness_center,
+                                              color: SystemTheme.neonCyan,
+                                              size: 20,
+                                            ),
+                                          ),
                                         ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                    ],
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            ex.name,
+                                            style: GoogleFonts.orbitron(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          if (ex.equipment != null || ex.grip != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${ex.equipment ?? "General"} • ${ex.grip ?? "Estándar"}'.toUpperCase(),
+                                              style: GoogleFonts.rajdhani(
+                                                fontSize: 10.5,
+                                                color: Colors.amber,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                     Container(
@@ -224,7 +327,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 8),
                                 Text(
                                   ex.description,
                                   style: GoogleFonts.rajdhani(

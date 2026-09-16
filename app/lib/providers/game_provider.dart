@@ -58,6 +58,14 @@ class GameProvider extends ChangeNotifier {
   String? _prAlert;
   List<Routine> _routines = [];
 
+  // Settings & Preferences (Ideas 8, 16, 19)
+  String _unitSystem = 'kg'; // 'kg' o 'lbs'
+  bool _wakeLockEnabled = true;
+  bool _restVibrationEnabled = true;
+
+  // Last completed routine history (Idea 1)
+  Map<String, dynamic>? _lastCompletedRoutine;
+
   User? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
   bool get isAdmin => _currentUser?.isAdmin ?? false;
@@ -77,6 +85,58 @@ class GameProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get workoutLogs => _workoutLogs;
   double get todayVolume => _todayVolume;
   String? get prAlert => _prAlert;
+
+  // Settings getters (Ideas 8, 16, 19)
+  String get unitSystem => _unitSystem;
+  bool get isLbs => _unitSystem == 'lbs';
+  bool get wakeLockEnabled => _wakeLockEnabled;
+  bool get restVibrationEnabled => _restVibrationEnabled;
+  Map<String, dynamic>? get lastCompletedRoutine => _lastCompletedRoutine;
+
+  Future<void> setUnitSystem(String unit) async {
+    _unitSystem = unit == 'lbs' ? 'lbs' : 'kg';
+    await _db.saveSetting('unit_system', _unitSystem);
+    notifyListeners();
+  }
+
+  Future<void> setWakeLockEnabled(bool val) async {
+    _wakeLockEnabled = val;
+    await _db.saveSetting('wake_lock_enabled', val ? '1' : '0');
+    notifyListeners();
+  }
+
+  Future<void> setRestVibrationEnabled(bool val) async {
+    _restVibrationEnabled = val;
+    await _db.saveSetting('rest_vibration_enabled', val ? '1' : '0');
+    notifyListeners();
+  }
+
+  /// Formatea un peso expresado en KG según la unidad preferida ('kg' o 'lbs').
+  String formatWeight(double weightKg, {int? decimals}) {
+    if (_unitSystem == 'lbs') {
+      final lbs = weightKg * 2.20462;
+      final d = decimals ?? (lbs.truncateToDouble() == lbs ? 0 : 1);
+      return '${lbs.toStringAsFixed(d)} lbs';
+    }
+    final d = decimals ?? (weightKg.truncateToDouble() == weightKg ? 0 : 1);
+    return '${weightKg.toStringAsFixed(d)} kg';
+  }
+
+  /// Convierte peso de KG a la unidad del usuario (para display/edición).
+  double toUserWeight(double weightKg) {
+    if (_unitSystem == 'lbs') {
+      return double.parse((weightKg * 2.20462).toStringAsFixed(1));
+    }
+    return weightKg;
+  }
+
+  /// Convierte peso introducido en la unidad del usuario a KG canónico.
+  double toKg(double userWeight) {
+    if (_unitSystem == 'lbs') {
+      return double.parse((userWeight / 2.20462).toStringAsFixed(2));
+    }
+    return userWeight;
+  }
 
   /// Nivel del Cazador en la escala de 1 a 100 (suma de los 14 músculos / 14).
   int get hunterLevel {
@@ -261,6 +321,10 @@ class GameProvider extends ChangeNotifier {
           await _handleMidnightCycle(todayStr);
         }
       }
+      _unitSystem = await _db.getSetting('unit_system', defaultValue: 'kg') ?? 'kg';
+      _wakeLockEnabled = (await _db.getSetting('wake_lock_enabled', defaultValue: '1')) == '1';
+      _restVibrationEnabled = (await _db.getSetting('rest_vibration_enabled', defaultValue: '1')) == '1';
+      _lastCompletedRoutine = await _db.getLastCompletedRoutine();
       await refreshWorkoutLogs();
     } catch (e) {
       debugPrint('Error in ensureGameStateLoaded: $e');
@@ -387,6 +451,7 @@ class GameProvider extends ChangeNotifier {
     required int reps,
     int dropsetDrops = 0,
     int? customMultiplier,
+    String setType = 'normal',
   }) async {
     if (_player == null) return false;
 
@@ -412,6 +477,7 @@ class GameProvider extends ChangeNotifier {
       reps: safeReps,
       dropsetDrops: dropsetDrops,
       customMultiplier: customMultiplier,
+      setType: setType,
     );
 
     // Check for Personal Record (PR)
@@ -453,6 +519,47 @@ class GameProvider extends ChangeNotifier {
     // Refresh history
     await refreshWorkoutLogs();
 
+    notifyListeners();
+
+    if (_isServerOnline) {
+      _sync.syncPlayerState(_player!, muscles: _muscles);
+    }
+    return true;
+  }
+
+  /// Deshace la última serie registrada deduciendo la XP de los músculos correspondientes
+  Future<bool> undoLastWorkout({
+    required Exercise exercise,
+    required double weightKg,
+    required int reps,
+    int dropsetDrops = 0,
+    int? customMultiplier,
+    String setType = 'normal',
+  }) async {
+    if (_player == null) return false;
+
+    final safeReps = reps.clamp(1, 200);
+    final streakMultiplier = _player!.streakXpMultiplier;
+    final xpDistribution = exercise.calculateXp(
+      weightKg: weightKg,
+      reps: safeReps,
+      dropsetDrops: dropsetDrops,
+      customMultiplier: customMultiplier,
+      setType: setType,
+    );
+
+    for (var entry in xpDistribution.entries) {
+      final muscleId = entry.key;
+      final xp = entry.value * streakMultiplier;
+      final muscle = getMuscle(muscleId);
+      if (muscle != null) {
+        muscle.currentXp = (muscle.currentXp - xp).clamp(0.0, double.infinity);
+        await _db.updateMuscle(muscle);
+      }
+    }
+
+    await _db.deleteLatestWorkoutLog(exercise.id);
+    await refreshWorkoutLogs();
     notifyListeners();
 
     if (_isServerOnline) {
@@ -793,6 +900,42 @@ class GameProvider extends ChangeNotifier {
     await _db.deleteRoutine(routineId);
     _routines.removeWhere((r) => r.id == routineId);
     notifyListeners();
+  }
+
+  /// Registra una rutina recién completada en el historial de SQLite.
+  Future<void> recordCompletedRoutine({
+    required String routineId,
+    required String routineName,
+    required int durationSeconds,
+    required double totalXp,
+    required int exercisesCount,
+    required int setsCount,
+    String? summaryJson,
+  }) async {
+    final nowStr = DateTime.now().toIso8601String();
+    await _db.logRoutineHistory(
+      routineId: routineId,
+      routineName: routineName,
+      completedAt: nowStr,
+      durationSeconds: durationSeconds,
+      totalXp: totalXp,
+      exercisesCount: exercisesCount,
+      setsCount: setsCount,
+      summaryJson: summaryJson,
+    );
+    _lastCompletedRoutine = await _db.getLastCompletedRoutine();
+    notifyListeners();
+  }
+
+  /// Recarga la última rutina del historial.
+  Future<void> loadLastCompletedRoutine() async {
+    _lastCompletedRoutine = await _db.getLastCompletedRoutine();
+    notifyListeners();
+  }
+
+  /// Obtiene el historial de rutinas completadas.
+  Future<List<Map<String, dynamic>>> getRoutineHistory({int limit = 50}) {
+    return _db.getRoutineHistory(limit: limit);
   }
 
   // ==================== GESTIÓN DE PERFIL ====================

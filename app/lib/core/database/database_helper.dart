@@ -133,6 +133,27 @@ class DatabaseHelper {
       )
     ''');
 
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS routine_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        routine_id TEXT NOT NULL,
+        routine_name TEXT NOT NULL,
+        completed_at TEXT NOT NULL,
+        duration_seconds INTEGER NOT NULL,
+        total_xp REAL NOT NULL,
+        exercises_count INTEGER NOT NULL,
+        sets_count INTEGER NOT NULL,
+        summary_json TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+
     // 2. Asegurar todas las columnas agregadas a través de versiones
     await _addColumnIfNotExists(db, 'exercises', 'tips', 'TEXT');
     await _addColumnIfNotExists(db, 'exercises', 'image_url', 'TEXT');
@@ -142,6 +163,8 @@ class DatabaseHelper {
     await _addColumnIfNotExists(db, 'exercises', 'muscles_xp_json', 'TEXT');
     await _addColumnIfNotExists(db, 'exercises', 'allow_dropset', 'INTEGER NOT NULL DEFAULT 1');
     await _addColumnIfNotExists(db, 'exercises', 'max_dropset_multiplier', 'INTEGER NOT NULL DEFAULT 4');
+    await _addColumnIfNotExists(db, 'exercises', 'equipment', 'TEXT');
+    await _addColumnIfNotExists(db, 'exercises', 'grip', 'TEXT');
     await _addColumnIfNotExists(db, 'users', 'uid', 'TEXT');
     await _addColumnIfNotExists(db, 'users', 'avatar_url', 'TEXT');
     await _addColumnIfNotExists(db, 'players', 'equipped_title', 'TEXT');
@@ -709,6 +732,15 @@ class DatabaseHelper {
     });
   }
 
+  Future<void> deleteLatestWorkoutLog(String exerciseId) async {
+    final db = await database;
+    await db.rawDelete('''
+      DELETE FROM workout_logs WHERE id IN (
+        SELECT id FROM workout_logs WHERE exercise_id = ? ORDER BY id DESC LIMIT 1
+      )
+    ''', [exerciseId]);
+  }
+
   Future<double> getMaxWeightForExercise(String exerciseId) async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.rawQuery(
@@ -927,6 +959,83 @@ class DatabaseHelper {
       },
       where: 'id = ?',
       whereArgs: [userId],
+    );
+  }
+
+  // ==================== AJUSTES PERSISTENTES ====================
+
+  /// Guarda una preferencia del sistema clave-valor.
+  Future<void> saveSetting(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'app_settings',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Obtiene una preferencia persistente del sistema.
+  Future<String?> getSetting(String key, {String? defaultValue}) async {
+    final db = await database;
+    final rows = await db.query(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (rows.isNotEmpty) {
+      return rows.first['value'] as String?;
+    }
+    return defaultValue;
+  }
+
+  // ==================== HISTORIAL DE RUTINAS ====================
+
+  /// Registra una rutina completada con fecha, duración y XP.
+  Future<void> logRoutineHistory({
+    required String routineId,
+    required String routineName,
+    required String completedAt,
+    required int durationSeconds,
+    required double totalXp,
+    required int exercisesCount,
+    required int setsCount,
+    String? summaryJson,
+  }) async {
+    final db = await database;
+    await db.insert('routine_history', {
+      'routine_id': routineId,
+      'routine_name': routineName,
+      'completed_at': completedAt,
+      'duration_seconds': durationSeconds,
+      'total_xp': totalXp,
+      'exercises_count': exercisesCount,
+      'sets_count': setsCount,
+      'summary_json': summaryJson,
+    });
+  }
+
+  /// Recupera la última rutina completada en el historial.
+  Future<Map<String, dynamic>?> getLastCompletedRoutine() async {
+    final db = await database;
+    final rows = await db.query(
+      'routine_history',
+      orderBy: 'id DESC',
+      limit: 1,
+    );
+    if (rows.isNotEmpty) {
+      return rows.first;
+    }
+    return null;
+  }
+
+  /// Recupera el listado completo de rutinas completadas en el historial.
+  Future<List<Map<String, dynamic>>> getRoutineHistory({int limit = 50}) async {
+    final db = await database;
+    return await db.query(
+      'routine_history',
+      orderBy: 'id DESC',
+      limit: limit,
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:olimpia_leveling/models/daily_quest.dart';
 import 'package:olimpia_leveling/models/player.dart';
 import 'package:olimpia_leveling/models/achievement.dart';
 import 'package:olimpia_leveling/models/routine.dart';
+import 'package:olimpia_leveling/core/sharing/routine_share_service.dart';
 import 'package:olimpia_leveling/core/calculator/one_rm_calculator.dart';
 
 void main() {
@@ -545,6 +546,114 @@ void main() {
       restored.lastCompletedTrialLevel = 14;
       expect(restored.lastCompletedTrialLevel, 14);
       expect(restored.lastCompletedTrialLevel < restored.totalLevel, isFalse);
+    });
+
+    test('Idea 3: Tipos de series y multiplicador x2 de XP al fallo muscular', () {
+      final benchPress = Exercise(
+        id: 'bench_press',
+        name: 'Press de Banca',
+        description: 'Pectoral mayor y tríceps',
+        primaryMuscle: 'pecho',
+        primaryXpPerKg: 5.0,
+        baseXp: 20.0,
+      );
+
+      // Serie normal (x1 XP)
+      final xpNormal = benchPress.calculateXp(weightKg: 80.0, reps: 10, setType: 'normal');
+      final normalTotal = xpNormal['pecho']!;
+
+      // Serie al fallo (x2 XP)
+      final xpFallo = benchPress.calculateXp(weightKg: 80.0, reps: 10, setType: 'fallo');
+      final falloTotal = xpFallo['pecho']!;
+      expect(falloTotal, closeTo(normalTotal * 2.0, 0.001));
+
+      // Serie de calentamiento (x0.5 XP)
+      final xpCalentamiento = benchPress.calculateXp(weightKg: 80.0, reps: 10, setType: 'calentamiento');
+      final calentamientoTotal = xpCalentamiento['pecho']!;
+      expect(calentamientoTotal, closeTo(normalTotal * 0.5, 0.001));
+    });
+
+    test('Idea 13: RoutineShareService codificación y decodificación compatible con WhatsApp', () {
+      final routine = Routine(
+        id: 'routine_olympus_1',
+        name: 'Día de Pecho Olímpico',
+        userId: 'hunter_zeus',
+        createdAt: '2026-09-15T12:00:00Z',
+        exercises: [
+          RoutineExercise(
+            exerciseId: 'press_banca',
+            exerciseName: 'Press de Banca',
+            primaryMuscle: 'pecho',
+            notes: 'Codos a 45 grados',
+            individualSets: [
+              const RoutineSet(setNumber: 1, weightKg: 60.0, reps: 15, restSeconds: 60, setType: 'calentamiento'),
+              const RoutineSet(setNumber: 2, weightKg: 80.0, reps: 10, restSeconds: 90, setType: 'normal'),
+              const RoutineSet(setNumber: 3, weightKg: 100.0, reps: 6, restSeconds: 120, setType: 'fallo'),
+            ],
+          ),
+        ],
+      );
+
+      // Codificar
+      final shareCode = RoutineShareService.encode(routine);
+      expect(shareCode.startsWith('OLM:'), isTrue);
+
+      // Decodificar
+      final decoded = RoutineShareService.decode(shareCode, userId: 'hunter_ares');
+      expect(decoded, isNotNull);
+      expect(decoded!.name, 'Día de Pecho Olímpico');
+      expect(decoded.userId, 'hunter_ares');
+      expect(decoded.exercises.length, 1);
+      final ex = decoded.exercises.first;
+      expect(ex.exerciseName, 'Press de Banca');
+      expect(ex.notes, 'Codos a 45 grados');
+      expect(ex.individualSets.length, 3);
+      expect(ex.individualSets[0].setType, 'calentamiento');
+      expect(ex.individualSets[1].setType, 'normal');
+      expect(ex.individualSets[2].setType, 'fallo');
+      expect(ex.individualSets[2].weightKg, 100.0);
+    });
+
+    test('Idea 5: Equipamiento y tipo de agarre en modelo Exercise', () {
+      final ex = Exercise(
+        id: 'dominadas',
+        name: 'Dominadas Pronas',
+        description: 'Dorsal ancho con barra fija',
+        primaryMuscle: 'espalda',
+        primaryXpPerKg: 4.0,
+        equipment: 'barra',
+        grip: 'prono',
+      );
+
+      expect(ex.equipment, 'barra');
+      expect(ex.grip, 'prono');
+
+      final map = ex.toMap();
+      expect(map['equipment'], 'barra');
+      expect(map['grip'], 'prono');
+
+      final restored = Exercise.fromMap(map);
+      expect(restored.equipment, 'barra');
+      expect(restored.grip, 'prono');
+    });
+
+    test('Idea 9: Notas por ejercicio y por serie en RoutineExercise y RoutineSet', () {
+      final set1 = const RoutineSet(
+        setNumber: 1,
+        weightKg: 50.0,
+        reps: 12,
+        restSeconds: 90,
+        setType: 'fallo',
+        notes: 'Alcanzado fallo en la repetición 11',
+      );
+
+      final map = set1.toMap();
+      expect(map['set_type'], 'fallo');
+      expect(map['notes'], 'Alcanzado fallo en la repetición 11');
+
+      final restored = RoutineSet.fromMap(map);
+      expect(restored.setType, 'fallo');
+      expect(restored.notes, 'Alcanzado fallo en la repetición 11');
     });
   });
 }

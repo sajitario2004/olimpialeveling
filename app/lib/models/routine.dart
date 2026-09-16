@@ -6,12 +6,16 @@ class RoutineSet {
   final double weightKg;
   final int reps;
   final int restSeconds;
+  final String setType; // 'normal', 'calentamiento', 'fallo'
+  final String notes;
 
   const RoutineSet({
     required this.setNumber,
     required this.weightKg,
     required this.reps,
     this.restSeconds = 90,
+    this.setType = 'normal',
+    this.notes = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +24,8 @@ class RoutineSet {
       'weight_kg': weightKg,
       'reps': reps,
       'rest_seconds': restSeconds,
+      'set_type': setType,
+      'notes': notes,
     };
   }
 
@@ -29,6 +35,8 @@ class RoutineSet {
       weightKg: (map['weight_kg'] as num?)?.toDouble() ?? 20.0,
       reps: (map['reps'] as num?)?.toInt() ?? 12,
       restSeconds: (map['rest_seconds'] as num?)?.toInt() ?? 90,
+      setType: map['set_type'] as String? ?? 'normal',
+      notes: map['notes'] as String? ?? '',
     );
   }
 
@@ -37,12 +45,16 @@ class RoutineSet {
     double? weightKg,
     int? reps,
     int? restSeconds,
+    String? setType,
+    String? notes,
   }) {
     return RoutineSet(
       setNumber: setNumber ?? this.setNumber,
       weightKg: weightKg ?? this.weightKg,
       reps: reps ?? this.reps,
       restSeconds: restSeconds ?? this.restSeconds,
+      setType: setType ?? this.setType,
+      notes: notes ?? this.notes,
     );
   }
 }
@@ -57,6 +69,8 @@ class RoutineExercise {
   final int _restSeconds;
   final String primaryMuscle;
   final List<RoutineSet> individualSets;
+  final String notes;
+  final String? imageUrl;
 
   const RoutineExercise({
     required this.exerciseId,
@@ -67,6 +81,8 @@ class RoutineExercise {
     int restSeconds = 90,
     this.primaryMuscle = 'pecho',
     this.individualSets = const [],
+    this.notes = '',
+    this.imageUrl,
   })  : _sets = sets,
         _targetWeightKg = targetWeightKg,
         _targetReps = targetReps,
@@ -114,6 +130,8 @@ class RoutineExercise {
       'rest_seconds': setsList.isNotEmpty ? setsList.first.restSeconds : restSeconds,
       'primary_muscle': primaryMuscle,
       'individual_sets': setsList.map((s) => s.toMap()).toList(),
+      'notes': notes,
+      'image_url': imageUrl,
     };
   }
 
@@ -154,6 +172,8 @@ class RoutineExercise {
       restSeconds: setsList.isNotEmpty ? setsList.first.restSeconds : defaultRest,
       primaryMuscle: map['primary_muscle'] ?? 'pecho',
       individualSets: setsList,
+      notes: map['notes'] as String? ?? '',
+      imageUrl: map['image_url'] as String?,
     );
   }
 
@@ -166,6 +186,8 @@ class RoutineExercise {
     int? restSeconds,
     String? primaryMuscle,
     List<RoutineSet>? individualSets,
+    String? notes,
+    String? imageUrl,
   }) {
     final newSets = individualSets ?? this.individualSets;
     return RoutineExercise(
@@ -177,6 +199,8 @@ class RoutineExercise {
       restSeconds: newSets.isNotEmpty ? newSets.first.restSeconds : (restSeconds ?? this.restSeconds),
       primaryMuscle: primaryMuscle ?? this.primaryMuscle,
       individualSets: newSets,
+      notes: notes ?? this.notes,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 }

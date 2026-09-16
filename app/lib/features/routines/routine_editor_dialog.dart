@@ -63,6 +63,7 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
           targetReps: 12,
           restSeconds: 90,
           primaryMuscle: ex.primaryMuscle,
+          imageUrl: ex.imageUrl ?? ex.gifUrl,
           individualSets: [
             const RoutineSet(setNumber: 1, weightKg: 20.0, reps: 12, restSeconds: 90),
             const RoutineSet(setNumber: 2, weightKg: 20.0, reps: 12, restSeconds: 90),
@@ -70,6 +71,71 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
           ],
         ),
       );
+    });
+  }
+
+  void _updateExerciseNotes(int exIdx, String notes) {
+    setState(() {
+      _selectedExercises[exIdx] = _selectedExercises[exIdx].copyWith(notes: notes);
+    });
+  }
+
+  void _openExerciseNotesDialog(int exIdx) {
+    final item = _selectedExercises[exIdx];
+    final ctrl = TextEditingController(text: item.notes);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0F172A),
+        title: Text(
+          'NOTAS: ${item.exerciseName.toUpperCase()}',
+          style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 3,
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'Ej: Ajustar agarre a la anchura de hombros, RPE 8...',
+            hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+            filled: true,
+            fillColor: const Color(0xFF1E293B),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCELAR', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: SystemTheme.neonCyan, foregroundColor: Colors.black),
+            onPressed: () {
+              _updateExerciseNotes(exIdx, ctrl.text.trim());
+              Navigator.pop(ctx);
+            },
+            child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _cycleSetType(int exIdx, int setIdx) {
+    final ex = _selectedExercises[exIdx];
+    final current = ex.individualSets[setIdx].setType;
+    String next = 'normal';
+    if (current == 'normal') {
+      next = 'calentamiento';
+    } else if (current == 'calentamiento') {
+      next = 'fallo';
+    } else {
+      next = 'normal';
+    }
+    final updated = List<RoutineSet>.from(ex.individualSets);
+    updated[setIdx] = updated[setIdx].copyWith(setType: next);
+    setState(() {
+      _selectedExercises[exIdx] = ex.copyWith(individualSets: updated);
     });
   }
 
@@ -392,10 +458,32 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
 
                                   return ListTile(
                                     dense: true,
-                                    leading: Icon(
-                                      isAlreadyAdded ? Icons.check_circle : Icons.add_circle_outline,
-                                      color: isAlreadyAdded ? Colors.greenAccent : SystemTheme.neonCyan,
-                                      size: 20,
+                                    leading: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isAlreadyAdded ? Icons.check_circle : Icons.add_circle_outline,
+                                          color: isAlreadyAdded ? Colors.greenAccent : SystemTheme.neonCyan,
+                                          size: 20,
+                                        ),
+                                        if ((ex.imageUrl != null && ex.imageUrl!.isNotEmpty) ||
+                                            (ex.gifUrl != null && ex.gifUrl!.isNotEmpty)) ...[
+                                          const SizedBox(width: 8),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(6),
+                                            child: Container(
+                                              width: 32,
+                                              height: 32,
+                                              color: const Color(0xFF1E293B),
+                                              child: Image.network(
+                                                ex.imageUrl?.isNotEmpty == true ? ex.imageUrl! : ex.gifUrl!,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, size: 16, color: SystemTheme.neonCyan),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                     title: Text(
                                       ex.name,
@@ -456,7 +544,7 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                         ),
                         if (_selectedExercises.isNotEmpty)
                           Text(
-                            'Personaliza cada serie',
+                            'Mantén pulsado para reordenar (Drag & Drop)',
                             style: GoogleFonts.rajdhani(fontSize: 11, color: SystemTheme.spartanGold),
                           ),
                       ],
@@ -492,13 +580,23 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                         ),
                       )
                     else
-                      ListView.builder(
+                      ReorderableListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _selectedExercises.length,
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            if (oldIndex < newIndex) newIndex -= 1;
+                            final item = _selectedExercises.removeAt(oldIndex);
+                            _selectedExercises.insert(newIndex, item);
+                          });
+                        },
                         itemBuilder: (context, exIdx) {
                           final item = _selectedExercises[exIdx];
+                          final hasThumb = item.imageUrl != null && item.imageUrl!.isNotEmpty;
+
                           return Container(
+                            key: ValueKey('routine_ex_${item.exerciseId}_$exIdx'),
                             margin: const EdgeInsets.only(bottom: 16),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -512,11 +610,34 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // CABECERA DEL EJERCICIO
+                                // CABECERA DEL EJERCICIO CON DRAG HANDLE Y MINIATURA
                                 Row(
                                   children: [
+                                    ReorderableDragStartListener(
+                                      index: exIdx,
+                                      child: const Padding(
+                                        padding: EdgeInsets.only(right: 6),
+                                        child: Icon(Icons.drag_indicator, color: Colors.white54, size: 20),
+                                      ),
+                                    ),
+                                    if (hasThumb) ...[
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Container(
+                                          width: 32,
+                                          height: 32,
+                                          color: const Color(0xFF1E293B),
+                                          child: Image.network(
+                                            item.imageUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, size: 16, color: SystemTheme.neonCyan),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
                                         color: SystemTheme.neonCyan.withOpacity(0.2),
                                         borderRadius: BorderRadius.circular(6),
@@ -525,13 +646,13 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                                       child: Text(
                                         '#${exIdx + 1}',
                                         style: GoogleFonts.orbitron(
-                                          fontSize: 11,
+                                          fontSize: 10.5,
                                           fontWeight: FontWeight.bold,
                                           color: SystemTheme.neonCyan,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
+                                    const SizedBox(width: 8),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,17 +668,28 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           Text(
-                                            'Músculo: ${item.primaryMuscle.toUpperCase()} • ${item.individualSets.length} series',
+                                            'Músculo: ${item.primaryMuscle.toUpperCase()}${item.notes.isNotEmpty ? " • Nota: ${item.notes}" : ""}',
                                             style: GoogleFonts.rajdhani(
                                               fontSize: 11,
-                                              color: Colors.white60,
+                                              color: item.notes.isNotEmpty ? Colors.amber : Colors.white60,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
                                       ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                                      icon: Icon(
+                                        item.notes.isNotEmpty ? Icons.sticky_note_2 : Icons.note_add_outlined,
+                                        color: item.notes.isNotEmpty ? Colors.amber : Colors.white60,
+                                        size: 20,
+                                      ),
+                                      tooltip: 'Notas del ejercicio',
+                                      onPressed: () => _openExerciseNotesDialog(exIdx),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
                                       tooltip: 'Eliminar ejercicio',
                                       onPressed: () => _removeExercise(exIdx),
                                     ),
@@ -584,11 +716,11 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                                         child: Row(
                                           children: [
                                             SizedBox(
-                                              width: 48,
+                                              width: 56,
                                               child: Text(
                                                 'SERIE',
                                                 style: GoogleFonts.orbitron(
-                                                  fontSize: 9.5,
+                                                  fontSize: 9.0,
                                                   fontWeight: FontWeight.bold,
                                                   color: SystemTheme.neonCyan,
                                                 ),
@@ -650,16 +782,61 @@ class _RoutineEditorDialogState extends State<RoutineEditorDialog> {
                                           ),
                                           child: Row(
                                             children: [
-                                              // NÚMERO DE SERIE
+                                              // NÚMERO DE SERIE Y TIPO (NORMAL / CALENTAMIENTO / FALLO)
                                               SizedBox(
-                                                width: 48,
-                                                child: Text(
-                                                  '#${routineSet.setNumber}',
-                                                  style: GoogleFonts.orbitron(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: SystemTheme.spartanGold,
-                                                  ),
+                                                width: 56,
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      '#${routineSet.setNumber}',
+                                                      style: GoogleFonts.orbitron(
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: SystemTheme.spartanGold,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 2),
+                                                    InkWell(
+                                                      onTap: () => _cycleSetType(exIdx, setIdx),
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                                        decoration: BoxDecoration(
+                                                          color: routineSet.setType == 'fallo'
+                                                              ? Colors.redAccent.withOpacity(0.25)
+                                                              : routineSet.setType == 'calentamiento'
+                                                                  ? Colors.amber.withOpacity(0.2)
+                                                                  : Colors.white10,
+                                                          borderRadius: BorderRadius.circular(4),
+                                                          border: Border.all(
+                                                            color: routineSet.setType == 'fallo'
+                                                                ? Colors.redAccent
+                                                                : routineSet.setType == 'calentamiento'
+                                                                    ? Colors.amber
+                                                                    : Colors.white24,
+                                                            width: 0.8,
+                                                          ),
+                                                        ),
+                                                        child: Text(
+                                                          routineSet.setType == 'fallo'
+                                                              ? 'FALLO'
+                                                              : routineSet.setType == 'calentamiento'
+                                                                  ? 'CAL.'
+                                                                  : 'NORM',
+                                                          style: GoogleFonts.orbitron(
+                                                            fontSize: 7.5,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: routineSet.setType == 'fallo'
+                                                                ? Colors.redAccent
+                                                                : routineSet.setType == 'calentamiento'
+                                                                    ? Colors.amber
+                                                                    : Colors.white70,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
 

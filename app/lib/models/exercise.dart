@@ -32,6 +32,8 @@ class Exercise {
   final List<MuscleXpEntry> musclesXp;
   final bool allowDropset;
   final int maxDropsetMultiplier;
+  final String? equipment;
+  final String? grip;
 
   Exercise({
     required this.id,
@@ -49,6 +51,8 @@ class Exercise {
     List<MuscleXpEntry>? musclesXp,
     this.allowDropset = true,
     this.maxDropsetMultiplier = 4,
+    this.equipment,
+    this.grip,
   }) : musclesXp = musclesXp ?? [
           MuscleXpEntry(muscle: primaryMuscle, xp: primaryXpPerKg),
           if (secondaryMuscle != null && (secondaryXpPerKg ?? 0) > 0)
@@ -60,7 +64,12 @@ class Exercise {
     required int reps,
     int dropsetDrops = 0,
     int? customMultiplier,
+    String setType = 'normal',
   }) {
+    final double setTypeMultiplier = setType == 'fallo'
+        ? 2.0 // Idea 3: x2 XP al fallo
+        : (setType == 'calentamiento' ? 0.5 : 1.0);
+
     final int dropsetMult = customMultiplier ??
         (dropsetDrops > 0 && allowDropset
             ? (1 + dropsetDrops).clamp(1, maxDropsetMultiplier)
@@ -71,19 +80,19 @@ class Exercise {
       for (int i = 0; i < musclesXp.length; i++) {
         final entry = musclesXp[i];
         final base = i == 0 ? baseXp : (baseXp * 0.5);
-        final xp = (((weightKg * entry.xp * reps) / 10.0) + base) * dropsetMult;
+        final xp = ((((weightKg * entry.xp * reps) / 10.0) + base) * dropsetMult) * setTypeMultiplier;
         result[entry.muscle] = double.parse(xp.toStringAsFixed(1));
       }
       return result;
     }
 
-    final primXp = (((weightKg * primaryXpPerKg * reps) / 10.0) + baseXp) * dropsetMult;
+    final primXp = ((((weightKg * primaryXpPerKg * reps) / 10.0) + baseXp) * dropsetMult) * setTypeMultiplier;
     final Map<String, double> result = {
       primaryMuscle: double.parse(primXp.toStringAsFixed(1)),
     };
 
     if (secondaryMuscle != null && (secondaryXpPerKg ?? 0) > 0) {
-      final secXp = (((weightKg * (secondaryXpPerKg!) * reps) / 10.0) + (baseXp * 0.5)) * dropsetMult;
+      final secXp = ((((weightKg * (secondaryXpPerKg!) * reps) / 10.0) + (baseXp * 0.5)) * dropsetMult) * setTypeMultiplier;
       result[secondaryMuscle!] = double.parse(secXp.toStringAsFixed(1));
     }
     return result;
@@ -109,6 +118,8 @@ class Exercise {
       'muscles_xp_json': jsonStr,
       'allow_dropset': allowDropset ? 1 : 0,
       'max_dropset_multiplier': maxDropsetMultiplier,
+      'equipment': equipment,
+      'grip': grip,
     };
   }
 
@@ -172,6 +183,8 @@ class Exercise {
       musclesXp: mList,
       allowDropset: map['allow_dropset'] == null || map['allow_dropset'] == true || map['allow_dropset'] == 1,
       maxDropsetMultiplier: (map['max_dropset_multiplier'] as num?)?.toInt() ?? 4,
+      equipment: map['equipment'] as String?,
+      grip: map['grip'] as String?,
     );
   }
 }
