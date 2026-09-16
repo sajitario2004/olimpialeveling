@@ -229,6 +229,47 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                   },
                 ),
               ),
+              const SizedBox(height: 8),
+
+              // Filter Chips 3: Tipo de Agarre (Idea 5)
+              SizedBox(
+                height: 32,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _gripFilters.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 6),
+                  itemBuilder: (context, index) {
+                    final filter = _gripFilters[index];
+                    final isSelected = _selectedGripFilter == filter;
+                    return ChoiceChip(
+                      label: Text(
+                        filter == 'TODOS' ? 'AGARRE: TODOS' : 'AGARRE: $filter',
+                        style: GoogleFonts.rajdhani(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.black : Colors.tealAccent.shade100,
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedColor: Colors.tealAccent,
+                      backgroundColor: const Color(0xFF0F172A),
+                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: isSelected ? Colors.tealAccent : Colors.white12,
+                        ),
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _selectedGripFilter = filter);
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
               const SizedBox(height: 10),
 
               // Exercise List

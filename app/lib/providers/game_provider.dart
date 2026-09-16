@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../core/database/database_helper.dart';
 import '../core/audio/audio_service.dart';
 import '../core/sync/server_sync_service.dart';
@@ -305,9 +304,7 @@ class GameProvider extends ChangeNotifier {
   /// Asegura que el jugador, músculos, ejercicios y misiones estén cargados en memoria.
   Future<void> ensureGameStateLoaded() async {
     try {
-      if (_player == null) {
-        _player = await _db.getPlayer();
-      }
+      _player ??= await _db.getPlayer();
       if (_muscles.isEmpty) {
         _muscles = await _db.getAllMuscles();
       }

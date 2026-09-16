@@ -591,6 +591,7 @@ class HunterProfileScreen extends StatelessWidget {
 
       if (savedPath != null && context.mounted) {
         await game.updateProfile(avatarUrl: savedPath);
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Foto de perfil actualizada con éxito.', style: GoogleFonts.orbitron(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),

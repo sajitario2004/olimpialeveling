@@ -16,6 +16,7 @@ import '../history/workout_history_sheet.dart';
 import '../developer/developer_terminal_dialog.dart';
 
 import '../profile/hunter_profile_screen.dart';
+import '../achievements/achievements_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -243,6 +244,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.history_outlined, color: Colors.white70),
                   tooltip: 'Crónicas de Entrenamiento Olímpico',
                   onPressed: () => _openWorkoutHistory(context),
+                ),
+
+                // Logros del Olimpo button
+                IconButton(
+                  icon: const Icon(Icons.emoji_events_outlined, color: Colors.amber),
+                  tooltip: 'Hazañas y Logros del Olimpo',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+                    );
+                  },
                 ),
 
                 // Quests button
